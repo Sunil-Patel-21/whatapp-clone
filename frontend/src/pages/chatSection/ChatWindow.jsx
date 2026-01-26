@@ -4,7 +4,7 @@ import useUserStore from "../../store/useUserStore";
 import { useChatStore } from "../../store/chatStore";
 import {isToday,isYesterday,format} from "date-fns";
 import EmojiPicker from "emoji-picker-react";
-import { FaArrowLeft, FaEllipsisH, FaEllipsisV, FaFile, FaLock, FaPaperclip, FaSmile, FaVideo } from "react-icons/fa";
+import { FaArrowLeft, FaEllipsisH, FaEllipsisV, FaFile, FaLock, FaPaperclip, FaPaperPlane, FaSmile, FaVideo } from "react-icons/fa";
 import whatsappImage from "../../images/whatsapp_image.png";
 import { object } from "yup";
 import MessageBubble from "./MessageBubble";
@@ -39,10 +39,11 @@ function ChatWindow({selectedContact, setSelectedContact}) {
     startTyping,
     stopTyping,
     getUserLastSeen,
+    currentConversation,
     isUserOnline,
     cleanup,
     deleteMessage,
-    addReaction
+    addReactions
     
   } = useChatStore();
 
@@ -53,19 +54,17 @@ function ChatWindow({selectedContact, setSelectedContact}) {
 
   console.log("LastSeen : ", lastSeen);
   
-  useEffect(() => {
-    if(selectedContact?._id && conversations?.data?.length > 0) {
-      const conversation = conversations?.data?.find((conv) => {
-        conv.participants.some((participant) => participant._id === selectedContact._id)
-      });
+useEffect(() => {
+    if (!selectedContact?._id || !conversations?.data?.length) return;
 
-      if(conversation?._id) {
+    const conversation = conversations.data.find(conv =>
+        conv.participants.some(p => p._id === selectedContact._id)
+    );
+
+    if (conversation?._id && conversation._id !== currentConversation) {
         fetchMessages(conversation._id);
-      }
-
     }
-  }, [selectedContact,conversations])
-  
+}, [selectedContact, conversations, currentConversation, fetchMessages]);
 
   useEffect(() => {
     fetchConversations();
@@ -111,37 +110,40 @@ function ChatWindow({selectedContact, setSelectedContact}) {
     }
   };
 
-  const handleSendMessage = async ()=>{
-    if(!selectedContact) return;
-    setFilePreview(null);
-    try {
-      const formData = new FormData();
-      formData.append("senderId", user?._id);
-      formData.append("receiverId", selectedContact?._id);
-      const status = isOnline ? "delivered" : "send";
-      formData.append("messageStatus", status);
-      if(message.trim()) {
-        formData.append("content", message.trim());
-      }
+const handleSendMessage = async () => {
+  if (!selectedContact) return;
 
-      if(selectedFile) {
-        formData.append("media", selectedFile,selectedFile.name);
-      }
-      if(message.trim() &&  !selectedFile) {
-        return
-      }
+  // 🔧 FIX: allow text OR file
+  if (!message.trim() && !selectedFile) return;
 
-      await sendMessage(formData);
+  try {
+    const formData = new FormData();
+    formData.append("senderId", user?._id);
+    formData.append("receiverId", selectedContact?._id);
 
-      // clear state
-      setMessage("");
-      setFilePreview(null);
-      setSelectedFile(null);
-      setShowFileMenu(false);
-    } catch (error) {
-      console.error("Error in sending message:", error);
+    const status = onlineStatus ? "delivered" : "send";
+    formData.append("messageStatus", status);
+
+    if (message.trim()) {
+      formData.append("content", message.trim());
     }
+
+    if (selectedFile) {
+      formData.append("media", selectedFile, selectedFile.name);
+    }
+
+    await sendMessage(formData);
+
+    // reset
+    setMessage("");
+    setSelectedFile(null);
+    setFilePreview(null);
+    setShowFileMenu(false);
+  } catch (error) {
+    console.error("Error sending message:", error);
   }
+};
+
 
   const renderDateSeparator = (date)=>{
       if(!isValidate(date)) return null;
@@ -185,14 +187,13 @@ function ChatWindow({selectedContact, setSelectedContact}) {
   const handleReaction = (messageId,emoji)=>{
     console.log("Messageid : " , messageId);
     console.log(" emoji : " , emoji);
-    addReaction(messageId,emoji);
+    addReactions(messageId,emoji);
   }
 
   console.log("Selected contact : ", selectedContact);
   
 
-  // if(!selectedContact) {
-  if(selectedContact) {
+  if(!selectedContact) {
     return <div className="flex flex-col items-center justify-center mx-auto h-screen text-center">
       <div className="max-w-md">
         <img src={whatsappImage} alt="whatsapp"  className="w-full h-auto"/>
@@ -236,7 +237,7 @@ function ChatWindow({selectedContact, setSelectedContact}) {
           <div>Typing...</div>
         ) :(
           <p className={`text-sm ${theme === "dark" ? "text-gray-400" : "text-gray-500"}`}>
-            {isUserOnline ? "Online" : lastSeen ? `Last seen ${format(new Date),"HH:mm" }`:"Offline"}
+            {onlineStatus ? "Online" : lastSeen ? `Last seen ${format(new Date),"HH:mm" }`:"Offline"}
           </p>
         )
       }
@@ -257,23 +258,24 @@ function ChatWindow({selectedContact, setSelectedContact}) {
     </div>
 
     <div className={`flex-1 p-4 overflow-y-auto ${theme === "dark" ? "bg-[#191a1a]" : "bg-[rgb(241,236,229)]"} `}>
-      {Object.entries(groupedMessages.map((date,msgs)=>(
+      {/* {Object.entries(groupedMessages).map((date,msgs)=>( */}
+      {Object.entries(groupedMessages).map(([date, msgs]) => (
         <React.Fragment key={date}>
           {renderDateSeparator(new Date(date))}
-          {msgs.filter(
-            (msg)=>msg.conversation === selectedContact?.conversation?._id
-          ).map((msg)=>(
-            <MessageBubble 
-              message={msg}
+                {msgs.map((msg) => (
+            <MessageBubble
               key={msg._id || msg.tempId}
+              message={msg}
               theme={theme}
               currentUser={user}
               onReact={handleReaction}
               deleteMessage={deleteMessage}
             />
           ))}
+
         </React.Fragment>
-      )))}
+      ))}
+
 
       <div ref={messagesEndRef} />
     </div>

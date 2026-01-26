@@ -8,6 +8,7 @@ import {
   FaComment,
   FaMoon,
   FaQuestionCircle,
+  FaSearch,
   FaSignOutAlt,
   FaSun,
   FaUser,

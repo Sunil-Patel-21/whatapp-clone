@@ -92,7 +92,8 @@ const initializeSocket = (server) => {
 
             // clear any existing time out
             if(userTyping[`${conversationId}_timeout`]){
-                clearTimeout(`${conversationId}_timeout`)
+                clearTimeout(userTyping[`${conversationId}_timeout`]);
+
             }
 
             // auto stop after 3s
