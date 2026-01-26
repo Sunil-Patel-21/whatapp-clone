@@ -208,15 +208,14 @@ const onProfileSubmit = async (data) => {
     setLoading(true);
 
     const formData = new FormData();
-    formData.append("username", data.username);
+    formData.append("username", data.username);    
     formData.append("agreed", String(data.agreed));
 
     if (profilePictureFile) {
       formData.append("profilePicture", profilePictureFile);
     } else {
       formData.append("profilePicture", selectedAvatar);
-    }
-
+    }    
     await updateUserProfile(formData);
 
     toast.success("Profile updated successfully");
@@ -306,23 +305,23 @@ const handleBack = ()=>{
 
                   <button 
                     type='button' 
-                      className={` inline-flex shrink-0 z-10 items-center py-2.5 px-4 text-sm font-medium text-center ${theme === "dark" ? "text-white bg-gray-700 border-gray-600" : "text-gray-900 bg-gray-100 border-gray-300"} border rounded-s-lg hover:bg-gray-200 focus:ring-4 focus:outline-none focus:ring-gray-100`}
+                      className={`  inline-flex shrink-0 z-10 items-center py-2.5 px-4 text-sm font-medium text-center ${theme === "dark" ? "text-white bg-gray-700 border-gray-600" : "text-gray-900 bg-gray-100 border-gray-300"} border rounded-s-lg hover:bg-gray-200 focus:ring-4 focus:outline-none focus:ring-gray-100`}
                       onClick={()=> setShowDropDown(!showDropDown)}
                     >
-                      <span>{selectCountry.flag} {selectCountry.dialCode}</span>
+                      <span className=''>{selectCountry.flag} {selectCountry.dialCode}</span>
                       <FaChevronDown />
                       
                     </button>
 
                     {
                       showDropDown &&(                      
-                      <div className={`absolute z-10 w-full mt-1 ${theme === "dark" ? "bg-gray-700 border-gray-600" : "bg-white border-gray-300"} border rounded-md shadow-lg max-h-60 overflow-auto`}> 
+                      <div className={`absolute z-10 w-full mt-1 ${theme === "dark" ? "bg-gray-700 border-gray-600" : "bg-white border-gray-800"} border rounded-md shadow-lg max-h-60 overflow-auto`}> 
                         <div className={`sticky top-0 ${theme === "dark" ? "bg-gray-700 " :"bg-white"} p-2`}>
                           <input type="text"  
                             placeholder='Search Countries...'
                             value={searchTerm}
                             onChange={(e)=> setSearchTerm(e.target.value)}
-                            className={`w-full px-2 py-1 border ${theme === "dark" ? "bg-gray-600 border-gray-500 text-white" : "bg-white border-gray-300 "} rounded-md  text-sm focus:outline-none focus:ring-2 focus:ring-green-500`}
+                            className={`w-full px-2 py-1 border ${theme === "dark" ? "bg-gray-600 border-gray-500 text-white" : "bg-white border-gray-300 text-gray-800"} rounded-md  text-sm focus:outline-none focus:ring-2 focus:ring-green-500`}
                           />
                         </div>
                         {
@@ -331,7 +330,7 @@ const handleBack = ()=>{
                               <button
                                 key={country.alpha2}
                                 type='button'
-                                className={`w-full text-left px-3 py-2 ${theme === "dark" ? "bg-gray-600 " :"bg-gray-100"} focus:outline-none focus:bg-gray-100`}
+                                className={`w-full text-left px-3 py-2 ${theme === "dark" ? "bg-gray-600 " :"bg-gray-100 text-black"} focus:outline-none focus:bg-gray-100`}
                                 onClick={()=>{
                                   setSelectCountry(country)
                                   setShowDropDown(false)
@@ -348,7 +347,7 @@ const handleBack = ()=>{
                   {...loginRegister("phoneNumber")}
                   value={phoneNumber}
                   onChange={(e)=>setPhoneNumber(e.target.value)}
-                  className={`w-2/3 px-4 py-2 border ${theme === "dark" ? "bg-gray-700 border-gray-600 text-white" : "bg-white border-gray-300 "} rounded-r-md text-sm focus:outline-none focus:ring-2 focus:ring-green-500 ${loginErrors.phoneNumber ? "border-red-500":""}`}
+                  className={`w-2/3 px-4 py-2 font-medium border ${theme === "dark" ? "bg-gray-700 border-gray-600 text-white" : "bg-white border-gray-300 text-gray-800"} rounded-r-md text-sm focus:outline-none focus:ring-2 focus:ring-green-500 ${loginErrors.phoneNumber ? "border-red-500":""}`}
                   placeholder='Enter your mobile number'
                 />
             </div>
@@ -413,7 +412,7 @@ const handleBack = ()=>{
                   onChange={(e)=> handleOtpChange(index,e.target.value)}
                   className={`w-12 h-12 text-center border 
                     ${theme === "dark" ? "bg-gray-700 border-gray-600 text-white" 
-                    : "bg-white border-gray-300 "} 
+                    : "bg-white border-gray-300 text-gray-800"} 
                     rounded-md focus:outline-none focus:ring-2 focus:ring-green-500
                     ${otpErrors.otp ? "border-red-500":""}`}
                 />
@@ -431,14 +430,23 @@ const handleBack = ()=>{
               >{loading  ? <Spinner /> : "Verify OTP"}</button>
               
               <button
-                type='button'
+                type="button"
                 onClick={handleBack}
-                className={`w-full mt-2 ${theme === "dark" ? "bg-gray-700 text-gray-300" : "bg-gray-200 text-gray-700"} py-2 rounded-md hover:bg-gray-600 transition flex items-center justify-between duration-300 ease-in-out`}
-                
+                className={`
+                  w-full mt-3 px-4 py-2.5 rounded-lg
+                  flex items-center gap-2 justify-center
+                  font-medium transition-all duration-300 ease-in-out
+                  focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-offset-2
+                  active:scale-[0.98]
+                  ${theme === "dark"
+                    ? "bg-gray-700 text-gray-300 hover:bg-gray-600 focus:ring-offset-gray-800"
+                    : "bg-gray-200 text-gray-700 hover:bg-gray-300 focus:ring-offset-white"}
+                `}
               >
-                <FaArrowLeft className='mr-2'/>
-                Wrong number ? Go back
+                <FaArrowLeft className="text-sm" />
+                <span>Wrong number? Go back</span>
               </button>
+
           
         </form>
       )}
@@ -496,7 +504,7 @@ const handleBack = ()=>{
               {...profileRegister("username")}
               placeholder='username'
               className={`w-full py-2 pl-10 pr-3 border ${
-                theme === "dark" ? "bg-gray-700 border-gray-600 text-white" : "bg-white border-gray-300"
+                theme === "dark" ? "bg-gray-700 border-gray-600 text-white" : "bg-white border-gray-300 text-gray-800"
               } rounded-md focus:outline-none focus:ring-2 focus:ring-green-500`}
             />
 
@@ -507,7 +515,7 @@ const handleBack = ()=>{
           </div>
 
           <div className='flex items-center space-x-2'>
-            <input type="checkbox" 
+            <input type="checkbox"  id='terms'
               {...profileRegister("agreed")}
               className={`rounded ${theme === "dark" ? "bg-gray-700 text-green-500" : "text-green-500"} focus:ring-2 focus:ring-green-500`}
             />
@@ -536,8 +544,6 @@ const handleBack = ()=>{
         </form>
       )}
       </motion.div>
-
-
       
     </div>
   )

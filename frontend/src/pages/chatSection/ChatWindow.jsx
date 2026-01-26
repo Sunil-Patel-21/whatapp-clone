@@ -27,6 +27,8 @@ function ChatWindow({selectedContact, setSelectedContact}) {
   const { theme } = useThemeStore();
   const { user } = useUserStore();
 
+
+
   const {
     messages,
     loading,
@@ -304,7 +306,7 @@ const handleSendMessage = async () => {
       </button>
 
       {showEmojiPicker && (
-        <div ref={emojiPickerRef} className="absolute left-0 bottom-16 z-50">
+        <div ref={emojiPickerRef} className="absolute  left-0 bottom-16 z-50">
           <EmojiPicker 
             onEmojiClick={(emojiObject) =>{
               setMessage((prevMessage) => prevMessage + emojiObject.emoji);

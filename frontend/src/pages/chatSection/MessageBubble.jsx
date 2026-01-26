@@ -137,13 +137,19 @@ function MessageBubble({
             </div>
             )}
 
-            {message.reactions && message.reactions.length > 0 && (
-                <div className={`absolute -bottom-5 ${isUserMessage ? "right-2" : "left-2"} ${theme === "dark" ?"bg-[#2a3942]" : "bg-gray-200"} rounded-full px-2 shadow-md`}>
-                    {message.reactions.map((reaction, index) => (
-                        <span key={index} className="mr-1"></span>
-                    ))}
-                </div>
-            )}
+        {message.reactions?.length > 0 && (
+        <div
+            className={`absolute -bottom-5 ${
+            isUserMessage ? "right-2" : "left-2"
+            } ${theme === "dark" ? "bg-[#2a3942]" : "bg-gray-200"}
+            rounded-full px-2 py-1 shadow-md flex items-center gap-1 text-sm`}
+        >
+            {message.reactions.map((reaction, index) => (
+            <span key={index}>{reaction.emoji}</span>
+            ))}
+        </div>
+        )}
+
 
             {showOptions && (
                 <div ref={optionsRef} className={`absolute top-8 right-1 z-50 rounded-lg shadow-lg py-2 text-sm ${theme === "dark" ? "bg-[#1d1f1f] text-white" : "bg-gray-100 text-black"}`}>
@@ -154,9 +160,9 @@ function MessageBubble({
                             }
                             setShowOptions(false);
                         }}
-                        className="flex items-center w-full px-4 py-2 gap-3 rounded-lg"
+                        className="flex items-center w-full px-4 py-2 gap-3 cursor-pointer rounded-lg"
                     >
-                        <FaRegCopy size={14}/> <span>copy</span>
+                        <FaRegCopy size={14}/> <span>Copy</span>
                     </button>
 
                     {isUserMessage && (

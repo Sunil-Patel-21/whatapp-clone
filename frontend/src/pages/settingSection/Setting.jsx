@@ -118,7 +118,7 @@ function Setting() {
                 </button>
               </div>
               <button 
-                className={`w-full flex items-center gap-3 p-2 rounded text-red-500 ${theme === "dark" ? "hover:bg-[#202c33]" : "hover:bg-gray-100"} mt-10 md:mt-36`}
+                className={`w-full flex items-center cursor-pointer gap-3 p-2 rounded text-red-500 ${theme === "dark" ? "hover:bg-[#202c33]" : "hover:bg-gray-100"} mt-10 md:mt-36`}
                 onClick={handleLogout}
               >
                 <FaSignOutAlt className="h-5 w-5"/>

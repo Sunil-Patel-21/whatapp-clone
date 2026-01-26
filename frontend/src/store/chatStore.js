@@ -46,11 +46,16 @@
             })
 
             // handle reactions on message
-            socket.on("reactions_update", (messageId,reactions) => {
-                set((state) => ({ 
-                    messages: state.messages.map((msg) => msg._id === messageId ? {...msg,reactions} : msg)
-                }));
-            })
+            socket.on("reaction_updated", ({ messageId, reactions }) => {
+            set((state) => ({
+                messages: state.messages.map((msg) =>
+                msg._id === messageId
+                    ? { ...msg, reactions }
+                    : msg
+                ),
+            }));
+            });
+
 
             // handle message deleted from local state
             socket.on("message_deleted", (messageId) => {
@@ -143,16 +148,11 @@
             try {
                 const {data} = await axiosInstance.get(`/chats/messages/${conversationId}/messages`);
                 const messageArray = data.data ||data || [];
-                set((state) => {
-                    const existingIds = new Set(state.messages.map(m => m._id));
-                    const newMessages = messageArray.filter(m => m._id && !existingIds.has(m._id));
-                    return {
-                        messages: [...state.messages, ...newMessages],
-                        currentConversation: conversationId,
-                        loading: false
-                    };
+                set({
+                messages: messageArray,
+                currentConversation: conversationId,
+                loading: false
                 });
-
 
                 // mark messages as read
                 const {markMessagesAsRead} = get();
