@@ -123,37 +123,53 @@
 
         setCurrentUser : (user) => set({ currentUser: user }),
 
-        fetchConversations: async ()=>{
-            set({ loading: true, error: null });
-            try {
-                const data = await axiosInstance.get("/chats/conversations");
-                set({ conversations: data, loading: false });
+        fetchConversations: async () => {
+        set({ loading: true, error: null });
+        try {
+            const res = await axiosInstance.get("/chats/conversations");
 
-                get().initializeSocketListeners();
-                return data;
-            } catch (error) {
-                set({ 
-                    error: error?.response?.data?.message || error?.message, 
-                    loading: false 
-                });
-                return null;
-            }
+            set({
+            conversations: res.data.data, // ✅ store array only
+            loading: false
+            });
+
+            get().initializeSocketListeners();
+            return res.data.data;
+        } catch (error) {
+            set({
+            error: error?.response?.data?.message || error?.message,
+            loading: false
+            });
+            return [];
+        }
         },
 
+
         fetchMessages: async (conversationId) => {
+            console.log("🟡 fetchMessages called with:", conversationId);
             if(!conversationId){
                 return ;
             }
             set({ loading: true, error: null });
             try {
-                const {data} = await axiosInstance.get(`/chats/messages/${conversationId}/messages`);
-                const messageArray = data.data ||data || [];
+                const  res  = await axiosInstance.get(
+                `/chats/conversations/${conversationId}/messages`
+                );
+                console.log("🟢 RAW API RESPONSE:", res);
+                console.log("🟢 res.data:", res.data);
+                console.log("🟢 res.data.data (messages):", res.data?.data);
+                const messageArray = res.data?.data ?? [];
+
                 set({
                 messages: messageArray,
                 currentConversation: conversationId,
                 loading: false
                 });
 
+                console.log(
+                    "🟢 Zustand messages AFTER set:",
+                    get().messages
+                    );
                 // mark messages as read
                 const {markMessagesAsRead} = get();
                 markMessagesAsRead();
@@ -266,7 +282,7 @@
             const {messages,currentUser} = get();
             if(!messages.length || !currentUser) return;
             const unreadIds = messages.filter((msg)=> msg.messageStatus !== "read" && msg.receiver?._id).map((msg)=> msg._id).filter(Boolean)
-            if(unreadIds.length > 0){
+            if(unreadIds.length === 0){
                 return;
             }
 

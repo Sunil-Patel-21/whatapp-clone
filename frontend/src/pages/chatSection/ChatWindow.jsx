@@ -57,16 +57,17 @@ function ChatWindow({selectedContact, setSelectedContact}) {
   console.log("LastSeen : ", lastSeen);
   
 useEffect(() => {
-    if (!selectedContact?._id || !conversations?.data?.length) return;
+  if (!selectedContact?._id || !conversations?.length) return;
 
-    const conversation = conversations.data.find(conv =>
-        conv.participants.some(p => p._id === selectedContact._id)
-    );
+  const conversation = conversations.find(conv =>
+    conv.participants.some(p => p._id === selectedContact._id)
+  );
 
-    if (conversation?._id && conversation._id !== currentConversation) {
-        fetchMessages(conversation._id);
-    }
-}, [selectedContact, conversations, currentConversation, fetchMessages]);
+  if (conversation?._id) {
+    fetchMessages(conversation._id);
+  }
+}, [selectedContact, conversations]);
+
 
   useEffect( () => {
     fetchConversations();
@@ -169,22 +170,22 @@ const handleSendMessage = async () => {
   }
 
   // grouping message
-  const groupedMessages = Array.isArray(messages) ? messages.reduce((acc, message) => {
-    if(!message.createdAt) return acc;
+const groupedMessages = Array.isArray(messages)
+  ? messages.reduce((acc, message) => {
+      const rawDate = message.createdAt || message.updatedAt;
+      if (!rawDate) return acc;
 
-    const date = new Date(message.createdAt);
-    if(isValidate(date)){
-      const dateString = format(date,"yyyy-MM-dd");
-      if(!acc[dateString]) {
-        acc[dateString] = [];
-      }
+      const date = new Date(rawDate);
+      if (!isValidate(date)) return acc;
+
+      const dateString = format(date, "yyyy-MM-dd");
+      if (!acc[dateString]) acc[dateString] = [];
       acc[dateString].push(message);
-    }else{
-      console.error("Invalid date:",date);
-    }
-    return acc
-    
-  },{}):{}
+
+      return acc;
+    }, {})
+  : {};
+
 
   const handleReaction = (messageId,emoji)=>{
     console.log("Messageid : " , messageId);
