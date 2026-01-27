@@ -262,9 +262,9 @@
         },
 
         // mark as read
-        markMessagesAsRead: async (messageId) =>{
+        markMessagesAsRead: async () =>{
             const {messages,currentUser} = get();
-            if(messages.length || !currentUser) return;
+            if(!messages.length || !currentUser) return;
             const unreadIds = messages.filter((msg)=> msg.messageStatus !== "read" && msg.receiver?._id).map((msg)=> msg._id).filter(Boolean)
             if(unreadIds.length > 0){
                 return;

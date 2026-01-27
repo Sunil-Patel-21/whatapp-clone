@@ -68,7 +68,7 @@ useEffect(() => {
     }
 }, [selectedContact, conversations, currentConversation, fetchMessages]);
 
-  useEffect(() => {
+  useEffect( () => {
     fetchConversations();
   },[]);
 

@@ -21,7 +21,10 @@ function MessageBubble({
 
     const emojiPickerRef = React.useRef(null);
     const reactionsMenuRef = React.useRef(null);
+
     const isUserMessage = message.sender._id === currentUser?._id;
+    const isTempMessage = typeof message._id === "string" && message._id.startsWith("temp-");
+
     const bubbleClass = isUserMessage ? "chat-end" : "chat-start";
     const bubbleContentClass = isUserMessage ? `chat-bubble md:max-w-[50%] min-w-[130px] ${theme === "dark" ?"bg-[#144d38] text-white" : "bg-[#d9fdd3] text-black"}` : `chat-bubble md:max-w-[50%] min-w-[130px] ${theme === "dark" ?"bg-[#144d38] text-white" : "bg-[#d9fdd3] text-black"}`;
     console.log("Message : ", message);
@@ -167,8 +170,9 @@ function MessageBubble({
 
                     {isUserMessage && (
                         <button 
-                            onClick={()=> {
-                                deleteMessage(message?._id);
+                            onClick={(e)=> {
+                                e.stopPropagation();
+                                deleteMessage(message._id);
                                 setShowOptions(false);
                             }}
                             className="flex items-center w-full px-4 py-2 gap-3 rounded-lg text-red-600"
