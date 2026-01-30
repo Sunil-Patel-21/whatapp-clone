@@ -70,20 +70,23 @@
             })
 
             // handle user typing
-            socket.on("user_typing", (userId, conversationId, isTyping) => {
+            socket.on("user_typing", ({ userId, conversationId, isTyping }) => {
                 set((state) => {
                     const newTypingUsers = new Map(state.typingUsers);
-                    if(!newTypingUsers.has(conversationId)){
-                        newTypingUsers.set(conversationId,new Set());
+
+                    if (!newTypingUsers.has(conversationId)) {
+                        newTypingUsers.set(conversationId, new Set());
                     }
 
                     const typingSet = newTypingUsers.get(conversationId);
-                    if(isTyping){
+
+                    if (isTyping) {
                         typingSet.add(userId);
-                    }else{
+                    } else {
                         typingSet.delete(userId);
                     }
-                    return {typingUsers: newTypingUsers};
+
+                    return { typingUsers: newTypingUsers };
                 });
             });
 
@@ -342,25 +345,29 @@
         },
 
         startTyping: (receiverId) => {
-            const {currentConversation} = get();
+            const { currentConversation, currentUser } = get();
             const socket = getSocket();
-            if(socket && currentConversation && receiverId ){
-                socket.emit("user_typing",{
-                    conversationId: currentConversation,
-                    receiverId
-                });
-            }
+
+            if (!socket || !currentConversation || !receiverId || !currentUser) return;
+
+            socket.emit("typing_start", {
+                userId: currentUser._id,
+                conversationId: currentConversation,
+                receiverId
+            });
         },
 
         stopTyping: (receiverId) => {
-            const {currentConversation} = get();
+            const { currentConversation, currentUser } = get();
             const socket = getSocket();
-            if(socket && currentConversation && receiverId ){
-                socket.emit("typing_stop",{
-                    conversationId: currentConversation,
-                    receiverId
-                });
-            }
+
+            if (!socket || !currentConversation || !receiverId || !currentUser) return;
+
+            socket.emit("typing_stop", {
+                userId: currentUser._id,
+                conversationId: currentConversation,
+                receiverId
+            });
         },
 
         isUserTyping: (userId) => {
