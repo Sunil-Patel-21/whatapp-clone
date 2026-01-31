@@ -107,7 +107,7 @@ useEffect(() => {
     if (file) {
       setSelectedFile(file);
       setShowFileMenu(false);
-      if(file.type.startsWith("image")) {
+      if(file.type.startsWith("image/") || file.type.startsWith("video/")) {
         setFilePreview(URL.createObjectURL(file));
       }
     }
@@ -285,7 +285,12 @@ const groupedMessages = Array.isArray(messages)
 
     {filePreview && (
       <div className="relative p-2">
+        {selectedFile?.type.startsWith("video/") ? (
+          <video src={filePreview} controls className="w-80 object-cover rounded shadow-lg mx-auto" />
+        ):(
         <img src={filePreview} alt="file-previews" className="w-80 object-cover rounded shadow-lg mx-auto"/>
+
+        )}
         <button
           onClick={()=>{
             setFilePreview(null);
