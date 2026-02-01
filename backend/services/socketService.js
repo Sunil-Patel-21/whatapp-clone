@@ -3,6 +3,7 @@ const dotenv = require("dotenv").config();
 const {Server} = require("socket.io");
 const User = require("../models/user.model");
 const Message = require("../models/message.model");
+const handleVideoCallEvents = require("./videoCallEvent");
 
 // map to store online users -> userId , socketId
 const onlineUsers = new Map();
@@ -29,6 +30,7 @@ const initializeSocket = (server) => {
         socket.on("user_connected", async (connectingUserId) => {
             try {
                 userId = connectingUserId
+                socket.userId = userId;
                 onlineUsers.set(userId, socket.id);
                 socket.join(userId);  // join personal room
 
@@ -166,7 +168,10 @@ const initializeSocket = (server) => {
             }
         })
 
-            // handle disconnection
+        // handle videoCallEvents
+        handleVideoCallEvents(socket,io,onlineUsers);
+
+        // handle disconnection
         const handleDisconnected = async()=>{
             if(!userId) return ;
             try {
