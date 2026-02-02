@@ -9,8 +9,9 @@ import UserDetails from "./components/UserDetails";
 import Status from "./pages/statusSection/Status";
 import Setting from "./pages/settingSection/Setting";
 import useUserStore from "./store/useUserStore";
-import { disconnectSocket, initializeSocket } from "./services/chat.service";
+import { disconnectSocket, initializeSocket, getSocket } from "./services/chat.service";
 import { useChatStore } from "./store/chatStore";
+import VideoCallManager from "./pages/videoCall/VideoCallManager";
 
 function App() {
   const {user} = useUserStore();
@@ -35,6 +36,7 @@ function App() {
   return (
     <>
       <ToastContainer position="top-right" autoClose={3000} />
+      {user && <VideoCallManager socket={getSocket()} />}
 
       <Router>
         <Routes>

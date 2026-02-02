@@ -365,7 +365,7 @@ function VideoCallModal({ socket }) {
     };
   }, [socket, peerConnection, currentCall, incomingCall, user]);
 
-  if (isCallModalOpen && incomingCall) return;
+  if (!isCallModalOpen) return null;
 
   const shouldShowActiveCall =
     isCallActive || callStatus === "calling" || callStatus === "connecting";
@@ -497,8 +497,7 @@ function VideoCallModal({ socket }) {
                     onClick={toggleVideo}
                     className={`w-12 h-12 rounded-full flex items-center justify-center transition-colors ${isVideoEnabled ? "bg-gray-600 hover:bg-gray-700 text-white" : "bg-red-500 hover:bg-red-600 text-white"} `}
                   >
-                    {isVideoEnabled} ? <FaVideo className="h-5 w-5" /> :{" "}
-                    <FaVideoSlash className="h-5 w-5" />
+                    {isVideoEnabled ? <FaVideo className="h-5 w-5" /> : <FaVideoSlash className="h-5 w-5" />}
                   </button>
                 )}
 
@@ -506,8 +505,7 @@ function VideoCallModal({ socket }) {
                   onClick={toggleAudio}
                   className={`w-12 h-12 rounded-full flex items-center justify-center transition-colors ${isAudioEnabled ? "bg-gray-600 hover:bg-gray-700 text-white" : "bg-red-500 hover:bg-red-600 text-white"} `}
                 >
-                  {isAudioEnabled} ? <FaMicrophone className="h-5 w-5" /> :{" "}
-                  <FaMicrophoneSlash className="h-5 w-5" />
+                  {isAudioEnabled ? <FaMicrophone className="h-5 w-5" /> : <FaMicrophoneSlash className="h-5 w-5" />}
                 </button>
 
                 <button

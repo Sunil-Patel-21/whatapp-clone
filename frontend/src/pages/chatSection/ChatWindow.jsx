@@ -397,7 +397,7 @@ const groupedMessages = Array.isArray(messages)
     </div>
 
   </div>;
-  <VideoCallManager socket={socket}/>
+  <VideoCallManager socket={socket}/> 
 
   </>
 }
