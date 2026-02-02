@@ -8,6 +8,7 @@ import {
   FaPhoneSlash,
   FaTimes,
   FaVideo,
+  FaVideoSlash,
 } from "react-icons/fa";
 
 function VideoCallModal({ socket }) {
@@ -107,6 +108,7 @@ function VideoCallModal({ socket }) {
         audio: true,
       });
       setLocalStream(stream);
+      return stream;
     } catch (error) {
       console.error("Media error", error);
       throw error;
@@ -379,9 +381,12 @@ function VideoCallModal({ socket }) {
             <div className="text-center mb-8">
               <div className="w-32 h-32 rounded-full bg-gray-300 mx-auto mb-4 overflow-hidden">
                 <img
-                  src={displayInfo.avatar}
-                  alt={displayInfo.name}
+                  src={displayInfo?.avatar}
+                  alt={displayInfo?.name}
                   className="w-full h-full object-cover"
+                  onError={(e) => {
+                    e.target.src = "/placeholder.svg"
+                  }}
                 />
               </div>
 
@@ -437,6 +442,9 @@ function VideoCallModal({ socket }) {
                       src={displayInfo.avatar}
                       alt={displayInfo.name}
                       className="w-full h-full object-cover"
+                      onError={(e) => {
+                        e.target.src = "/placeholder.svg"
+                      }}
                     />
                   </div>
 
@@ -486,14 +494,16 @@ function VideoCallModal({ socket }) {
               <div className="flex space-x-4 ">
                 {callType === "video" && (
                   <button
+                    onClick={toggleVideo}
                     className={`w-12 h-12 rounded-full flex items-center justify-center transition-colors ${isVideoEnabled ? "bg-gray-600 hover:bg-gray-700 text-white" : "bg-red-500 hover:bg-red-600 text-white"} `}
                   >
                     {isVideoEnabled} ? <FaVideo className="h-5 w-5" /> :{" "}
-                    <FaPhoneSlash className="h-5 w-5" />
+                    <FaVideoSlash className="h-5 w-5" />
                   </button>
                 )}
 
                 <button
+                  onClick={toggleAudio}
                   className={`w-12 h-12 rounded-full flex items-center justify-center transition-colors ${isAudioEnabled ? "bg-gray-600 hover:bg-gray-700 text-white" : "bg-red-500 hover:bg-red-600 text-white"} `}
                 >
                   {isAudioEnabled} ? <FaMicrophone className="h-5 w-5" /> :{" "}
@@ -502,9 +512,9 @@ function VideoCallModal({ socket }) {
 
                 <button
                   onClick={handleEndCall}
-                  className="w-16 h-16 bg-red-500 hover:bg-red-600 rounded-full flex items-center justify-center text-white transition-colors"
+                  className="w-12 h-12 bg-red-500 hover:bg-red-600 rounded-full flex items-center justify-center text-white transition-colors"
                 >
-                  <FaPhoneSlash className="w-6 h-6 " />
+                  <FaPhoneSlash className="w-5 h-5 " />
                 </button>
               </div>
             </div>
@@ -516,7 +526,7 @@ function VideoCallModal({ socket }) {
             onClick={handleEndCall}
             className=" absolute top-4 right-4 w-8 h-8 bg-gray-500 hover:bg-gray-600 rounded-full flex items-center justify-center text-white transition-colors"
           >
-            <FaTimes className="w-6 h-6 " />
+            <FaTimes className="w-5 h-5 " />
           </button>
         )}
       </div>

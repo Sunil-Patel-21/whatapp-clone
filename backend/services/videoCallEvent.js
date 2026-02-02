@@ -89,6 +89,8 @@ const handleVideoCallEvents = (socket,io,onlineUsers) => {
     // webRTC signaling events ice candidate
     socket.on("webrtc_ice_candidate",({candidate,callId,receiverId}) => {
         const receiverSocketId = onlineUsers.get(receiverId);
+        console.log("connecting ice candidate");
+        
         if(receiverSocketId){
             io.to(receiverSocketId).emit("webrtc_ice_candidate", {
                 candidate,
