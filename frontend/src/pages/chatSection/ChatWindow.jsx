@@ -4,7 +4,7 @@ import useUserStore from "../../store/useUserStore";
 import { useChatStore } from "../../store/chatStore";
 import {isToday,isYesterday,format} from "date-fns";
 import EmojiPicker from "emoji-picker-react";
-import { FaArrowLeft, FaEllipsisH, FaEllipsisV, FaFile, FaLock, FaPaperclip, FaPaperPlane, FaSmile, FaVideo } from "react-icons/fa";
+import { FaArrowLeft, FaEllipsisH, FaEllipsisV, FaFile, FaImage, FaLock, FaPaperclip, FaPaperPlane, FaSmile, FaTimes, FaVideo } from "react-icons/fa";
 import whatsappImage from "../../images/whatsapp_image.png";
 import { object } from "yup";
 import MessageBubble from "./MessageBubble";
@@ -199,18 +199,21 @@ const groupedMessages = Array.isArray(messages)
   }
 
   const handleVideoCall = ()=>{
-    if(selectedContact && onlineStatus){
-      const {initiateCall} = useVideoCallStore().getState();
-
-      const avatar = selectedContact?.profilePicture;
-      initiateCall(
-        selectedContact?._id,
-        selectedContact?.username,
-        avatar,
-        "video"
-      )
-    }else{
-      alert("User is offline. Cannot initiate the call.")
+    if(selectedContact){
+      // Use the user store to get the initiateCall function that was set by VideoCallManager
+      const initiateCall = useUserStore.getState().initiateCall;
+      
+      if(initiateCall){
+        const avatar = selectedContact?.profilePicture;
+        initiateCall(
+          selectedContact?._id,
+          selectedContact?.username,
+          avatar,
+          "video"
+        )
+      } else {
+        console.error("initiateCall function not available");
+      }
     }
   }
 
@@ -262,7 +265,7 @@ const groupedMessages = Array.isArray(messages)
           <div>Typing...</div>
         ) :(
           <p className={`text-sm ${theme === "dark" ? "text-gray-400" : "text-gray-500"}`}>
-            {onlineStatus ? "Online" : lastSeen ? `Last seen ${format(new Date),"HH:mm" }`:"Offline"}
+            {onlineStatus ? "Online" : lastSeen ? `Last seen ${format(new Date(lastSeen),"HH:mm" )}`:"Offline"}
           </p>
         )
       }
@@ -270,7 +273,7 @@ const groupedMessages = Array.isArray(messages)
     </div>
 
     <div className={`flex items-center space-x-4 `}>
-      <button className="focus:outline-none" onClick={handleVideoCall} title={onlineStatus ? "start video call" :"user is offline"}>
+      <button className="focus:outline-none" onClick={handleVideoCall} title="Start video call">
         <FaVideo className="h-5 w-5 text-green-500 hover:text-green-600" />
       </button>
 

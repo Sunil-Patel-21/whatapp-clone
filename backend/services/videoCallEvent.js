@@ -49,10 +49,10 @@ const handleVideoCallEvents = (socket,io,onlineUsers) => {
     // end call
     socket.on("end_call",({callId,participantId}) => {
         const participantSocketId = onlineUsers.get(participantId);
-        if(callerSocketId){
+        if(participantSocketId){
             io.to(participantSocketId).emit("call_ended", {participantId});
         }else{
-            console.log("caller not online");
+            console.log("participant not online");
         }
     });
 

@@ -91,7 +91,7 @@
             });
 
             // handle user's online/offline status
-            socket.on("user_status", (userId, isOnline, lastSeen) => {
+            socket.on("user_status", ({userId, isOnline, lastSeen}) => {
                 set((state) => {
                     const newOnlineUsers = new Map(state.onlineUsers);
                     newOnlineUsers.set(userId,{isOnline,lastSeen});
@@ -101,20 +101,20 @@
 
             // emit status check for all users in conversation list
             const {conversations} = get();
-            if(conversations?.data?.length > 0){
-                conversations.data.forEach((conversation) => {
+            if(conversations?.length > 0){
+                conversations.forEach((conversation) => {
                     
                     const otherUser = conversation.participants.find(
                         (p) => p._id !== get().currentUser._id
                     );
 
-                    if(otherUser._id){
+                    if(otherUser?._id){
                         socket.emit("get_user_status", otherUser._id,(status)=>{
                             set((state) => {
                                 const newOnlineUsers = new Map(state.onlineUsers);
-                                newOnlineUsers.set(state.userId,{
-                                    isOnline: state.isOnline,
-                                    lastSeen: state.lastSeen
+                                newOnlineUsers.set(status.userId,{
+                                    isOnline: status.isOnline,
+                                    lastSeen: status.lastSeen
                                 });
                                 return {onlineUsers: newOnlineUsers};
                             });
@@ -306,7 +306,7 @@
                 const socket = getSocket();
                 if(socket){
                     socket.emit("message_read",{
-                        messageId:unreadIds,
+                        messageIds:unreadIds,
                         senderId: messages[0]?.sender?._id
                     });
                 }
