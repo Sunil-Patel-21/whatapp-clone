@@ -399,7 +399,7 @@ const groupedMessages = Array.isArray(messages)
 
     </div>
 
-  </div>;
+  </div>
   <VideoCallManager socket={socket}/> 
 
   </>
