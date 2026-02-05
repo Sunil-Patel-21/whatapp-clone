@@ -306,68 +306,69 @@ function Status() {
         {showCreateModal && (
           <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
             <div
-              className={`p-6 rounded-lg max-w-md w-full mx-4  ${theme === "dark" ? "bg-gray-800" : "bg-white"}`}
+              className={`p-6 rounded-lg max-w-md w-full mx-4 ${theme === "dark" ? "bg-gray-800" : "bg-white"}`}
             >
               <h3
                 className={`text-lg mb-4 font-semibold ${theme === "dark" ? "text-white" : "text-gray-900"}`}
               >
                 Create Status
               </h3>
+              
               {filePreview && (
-                <div className="mb-4 ">
+                <div className="mb-4">
                   {selectedFile?.type.startsWith("video/") ? (
                     <video
                       src={filePreview}
                       controls
-                      className="w-full h-32  object-cover rounded"
+                      className="w-full h-32 object-cover rounded"
                     />
                   ) : (
                     <img
                       src={filePreview}
-                      alt="file-previews"
-                      className="w-full h-32  object-cover rounded"
+                      alt="Preview"
+                      className="w-full h-32 object-cover rounded"
                     />
                   )}
                 </div>
               )}
 
               <textarea
-                name=""
-                id=""
                 value={newStatus}
                 onChange={(e) => setNewStatus(e.target.value)}
-                placeholder="What on your mind"
-                className={`w-full p-3 rounded-lg mb-4  border ${theme === "dark" ? "bg-gray-700 border-gray-600 text-white" : "bg-gray-100 text-black border-gray-300"}`}
+                placeholder="What's on your mind?"
+                className={`w-full p-3 rounded-lg mb-4 border ${theme === "dark" ? "bg-gray-700 border-gray-600 text-white" : "bg-gray-100 text-black border-gray-300"}`}
                 rows={3}
-              ></textarea>
-            </div>
+              />
 
-            <input type="file" accept="image/*, video/*" 
-              onChange={handleFileChange}
-              className="mb-4"
-            />
+              <input 
+                type="file" 
+                accept="image/*,video/*"
+                onChange={handleFileChange}
+                className={`w-full mb-4 ${theme === "dark" ? "text-white" : "text-black"}`}
+              />
 
-            <div className="flex justify-end space-x-3">
-              <button 
-                onClick={() => {
-                  setShowCreateModal(false)
-                  setNewStatus("")
-                  setSelectedFile(null)
-                  setFilePreview(null)
-                }}
-                disabled={loading}
-                className="px-4 py-2 text-gray-500 hover:text-gray-700 " 
-              >
-                Cancel
-              </button>
+              <div className="flex justify-end space-x-3">
+                <button 
+                  onClick={() => {
+                    setShowCreateModal(false);
+                    setNewStatus("");
+                    setSelectedFile(null);
+                    setFilePreview(null);
+                  }}
+                  disabled={loading}
+                  className={`px-4 py-2 rounded ${theme === "dark" ? "text-gray-300 hover:text-white" : "text-gray-500 hover:text-gray-700"}`}
+                >
+                  Cancel
+                </button>
 
-              <button 
-                onClick={() => handleCreateStatus()}
-                disabled={loading || newStatus.trim() === "" && !selectedFile}
-                className="px-4 py-2 bg-green-500 text-white rounded hover:bg-gray-600 disabled:opacity-50 " 
-              >
-                {loading ? "creating..." : "Create"}
-              </button>
+                <button 
+                  onClick={handleCreateStatus}
+                  disabled={loading || (!newStatus.trim() && !selectedFile)}
+                  className="px-4 py-2 bg-green-500 text-white rounded hover:bg-green-600 disabled:opacity-50"
+                >
+                  {loading ? "Creating..." : "Create"}
+                </button>
+              </div>
             </div>
           </div>
         )}
