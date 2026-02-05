@@ -3,7 +3,7 @@ const router = express.Router();
 
 const authMiddleware = require("../middlewares/auth.middleware");
 const { multerMiddleware } = require("../config/cloudinaryConfig");
-const { sendMessage, getConversation, getMessages, markAsRead, deleteMessage } = require("../controllers/chat.controller");
+const { sendMessage, getConversation, getMessages, markAsRead, deleteMessage, clearChat } = require("../controllers/chat.controller");
 
 // protected route 
 router.post("/send-message",authMiddleware, multerMiddleware,sendMessage);
@@ -14,5 +14,7 @@ router.get("/conversations/:conversationId/messages",authMiddleware,getMessages)
 router.put("/messages/read", authMiddleware,markAsRead);
 
 router.delete("/messages/:messageId", authMiddleware,deleteMessage);
+
+router.delete("/conversations/:conversationId/clear", authMiddleware, clearChat);
 
 module.exports = router;

@@ -39,7 +39,11 @@ const messageSchema = new mongoose.Schema({
     messageStatus: {
         type: String,
         default: 'send'
-    }
+    },
+    deletedFor: [{
+        type: mongoose.Schema.Types.ObjectId,
+        ref: 'User'
+    }]
 },
 {
     timestamps: true

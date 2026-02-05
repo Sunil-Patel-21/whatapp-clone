@@ -115,7 +115,10 @@ exports.getMessages = async (req,res)=>{
         if(!conversation.participants.includes(userId)){
             return response(res,403,"unauthorized user");
         }
-        const messages = await Message.find({conversation:conversationId})
+        const messages = await Message.find({
+            conversation:conversationId,
+            deletedFor: {$ne: userId}
+        })
         .populate("sender","username profilePicture")
         .populate("receiver","username profilePicture")
         .sort("createdAt");
@@ -198,6 +201,31 @@ exports.deleteMessage = async (req,res)=>{
         }
 
         return response(res,200,"messages deleted successfully",messages);
+    } catch (error) {
+        console.error(error);
+        return response(res,500,"Internal server error");
+    }
+}
+
+// clear chat for user
+exports.clearChat = async (req,res)=>{
+    const {conversationId} = req.params;
+    const userId = req.user.userId;
+    try {
+        const conversation = await Conversation.findById(conversationId);
+        if(!conversation){
+            return response(res,404,"conversation not found");
+        }
+        if(!conversation.participants.includes(userId)){
+            return response(res,403,"unauthorized user");
+        }
+        
+        await Message.updateMany(
+            {conversation: conversationId},
+            {$addToSet: {deletedFor: userId}}
+        );
+
+        return response(res,200,"chat cleared successfully");
     } catch (error) {
         console.error(error);
         return response(res,500,"Internal server error");

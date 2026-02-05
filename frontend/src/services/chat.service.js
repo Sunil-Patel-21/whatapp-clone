@@ -1,5 +1,6 @@
 import {io} from "socket.io-client";
 import useUserStore from "../store/useUserStore";
+import { axiosInstance } from "./url.service";
 
 let socket = null;
 
@@ -50,4 +51,13 @@ export const disconnectSocket = () => {
         socket = null;
     }
 }
+
+export const clearChat = async (conversationId) => {
+    try {
+        const response = await axiosInstance.delete(`/chats/conversations/${conversationId}/clear`);
+        return response.data;
+    } catch (error) {
+        throw error.response?.data || error.message;
+    }
+};
 

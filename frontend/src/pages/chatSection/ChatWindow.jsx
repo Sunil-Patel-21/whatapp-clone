@@ -11,7 +11,7 @@ import MessageBubble from "./MessageBubble";
 import ContactInfo from "./ContactInfo";
 import { toast } from "react-toastify";
 import VideoCallManager from "../videoCall/VideoCallManager";
-import { getSocket } from "../../services/chat.service";
+import { getSocket, clearChat } from "../../services/chat.service";
 import useVideoCallStore from "../../store/videoCallStore";
 import useOutsideclick from "../../hooks/useOutSideClick";
 const isValidate = (date) => {
@@ -210,10 +210,20 @@ const groupedMessages = Array.isArray(messages)
     addReactions(messageId,emoji);
   }
 
-  const handleClearChat = () => {
+  const handleClearChat = async () => {
     if (window.confirm('Clear all messages in this chat?')) {
-      messages.forEach(msg => deleteMessage(msg._id));
-      toast.success('Chat cleared');
+      try {
+        const conversation = conversations.find(conv =>
+          conv.participants.some(p => p._id === selectedContact._id)
+        );
+        if (conversation?._id) {
+          await clearChat(conversation._id);
+          await fetchMessages(conversation._id);
+          toast.success('Chat cleared');
+        }
+      } catch (error) {
+        toast.error('Failed to clear chat');
+      }
       setShowChatMenu(false);
     }
   };
