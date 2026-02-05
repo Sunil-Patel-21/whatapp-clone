@@ -8,6 +8,7 @@ import { ProtectedRoute, PublicRoute } from "./Protected";
 import UserDetails from "./components/UserDetails";
 import Status from "./pages/statusSection/Status";
 import Setting from "./pages/settingSection/Setting";
+import Help from "./pages/settingSection/Help";
 import useUserStore from "./store/useUserStore";
 import { disconnectSocket, initializeSocket, getSocket } from "./services/chat.service";
 import { useChatStore } from "./store/chatStore";
@@ -52,6 +53,7 @@ function App() {
             <Route path="/user-profile" element={<UserDetails />} />
             <Route path="/status" element={<Status />} />
             <Route path="/setting" element={<Setting />} />
+            <Route path="/help" element={<Help />} />
           </Route>
 
         </Routes>

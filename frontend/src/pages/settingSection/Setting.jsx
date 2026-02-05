@@ -81,7 +81,7 @@ function Setting() {
                   {
                     icon: FaQuestionCircle,
                     lable: "Help",
-                    href: "/user-profile",
+                    href: "/help",
                   },
                 ].map((item) => (
                   <Link
