@@ -8,9 +8,12 @@ import { FaArrowLeft, FaEllipsisH, FaEllipsisV, FaFile, FaImage, FaLock, FaPaper
 import whatsappImage from "../../images/whatsapp_image.png";
 import { object } from "yup";
 import MessageBubble from "./MessageBubble";
+import ContactInfo from "./ContactInfo";
+import { toast } from "react-toastify";
 import VideoCallManager from "../videoCall/VideoCallManager";
 import { getSocket } from "../../services/chat.service";
 import useVideoCallStore from "../../store/videoCallStore";
+import useOutsideclick from "../../hooks/useOutSideClick";
 const isValidate = (date) => {
   return date instanceof Date && !isNaN(date);
 };
@@ -20,6 +23,9 @@ function ChatWindow({selectedContact, setSelectedContact}) {
   const [showEmojiPicker, setShowEmojiPicker] = useState(false);
   const [showFileMenu, setShowFileMenu] = useState(false);
   const [showChatMenu, setShowChatMenu] = useState(false);
+  const [showContactInfo, setShowContactInfo] = useState(false);
+  const [showSearch, setShowSearch] = useState(false);
+  const [searchQuery, setSearchQuery] = useState("");
   const [filePreview, setFilePreview] = useState(null);
   const [selectedFile, setSelectedFile] = useState(null);
 
@@ -87,6 +93,10 @@ useEffect(() => {
   useEffect(()=>{
     scrollToBottom();
   },[messages]);
+
+  useOutsideclick(chatMenuRef, () => {
+    if(showChatMenu) setShowChatMenu(false);
+  });
 
   useEffect(()=>{
     if(message && selectedContact){
@@ -200,6 +210,31 @@ const groupedMessages = Array.isArray(messages)
     addReactions(messageId,emoji);
   }
 
+  const handleClearChat = () => {
+    if (window.confirm('Clear all messages in this chat?')) {
+      messages.forEach(msg => deleteMessage(msg._id));
+      toast.success('Chat cleared');
+      setShowChatMenu(false);
+    }
+  };
+
+  const handleBlockContact = () => {
+    if (window.confirm(`Block ${selectedContact?.username}?`)) {
+      toast.info('Block feature coming soon');
+      setShowChatMenu(false);
+    }
+  };
+
+  const filteredMessages = searchQuery
+    ? Object.entries(groupedMessages).reduce((acc, [date, msgs]) => {
+        const filtered = msgs.filter(msg =>
+          msg.content?.toLowerCase().includes(searchQuery.toLowerCase())
+        );
+        if (filtered.length > 0) acc[date] = filtered;
+        return acc;
+      }, {})
+    : groupedMessages;
+
   const handleVideoCall = ()=>{
     if(selectedContact){
       // Use the user store to get the initiateCall function that was set by VideoCallManager
@@ -242,6 +277,9 @@ const groupedMessages = Array.isArray(messages)
   }
 
   return   <>
+  {showContactInfo ? (
+    <ContactInfo contact={selectedContact} theme={theme} onClose={() => setShowContactInfo(false)} />
+  ) : (
   <div className="flex-1 h-screen w-full flex flex-col">
 
     <div className={`p-4 flex items-center ${theme === "dark" ? "bg-[#303430 text-white" :"bg-[rgb(239,242,245)] text-gray-600"}`}>
@@ -285,24 +323,48 @@ const groupedMessages = Array.isArray(messages)
 
       {showChatMenu && (
         <div ref={chatMenuRef} className={`absolute top-10 right-0 w-56 rounded-lg shadow-lg py-2 z-50 ${theme === "dark" ? "bg-[#2a3942] text-white" : "bg-white text-gray-800"}`}>
-          <button className={`flex items-center w-full px-4 py-3 gap-3 ${theme === "dark" ? "hover:bg-[#202c33]" : "hover:bg-gray-100"}`}>
+          <button
+            onClick={() => {
+              setShowContactInfo(true);
+              setShowChatMenu(false);
+            }}
+            className={`flex items-center w-full px-4 py-3 gap-3 ${theme === "dark" ? "hover:bg-[#202c33]" : "hover:bg-gray-100"}`}
+          >
             <FaUserCircle className="h-4 w-4" />
             <span>Contact Info</span>
           </button>
-          <button className={`flex items-center w-full px-4 py-3 gap-3 ${theme === "dark" ? "hover:bg-[#202c33]" : "hover:bg-gray-100"}`}>
+          <button
+            onClick={() => {
+              setShowSearch(!showSearch);
+              setShowChatMenu(false);
+            }}
+            className={`flex items-center w-full px-4 py-3 gap-3 ${theme === "dark" ? "hover:bg-[#202c33]" : "hover:bg-gray-100"}`}
+          >
             <FaSearch className="h-4 w-4" />
             <span>Search</span>
           </button>
-          <button className={`flex items-center w-full px-4 py-3 gap-3 ${theme === "dark" ? "hover:bg-[#202c33]" : "hover:bg-gray-100"}`}>
+          <button
+            onClick={() => {
+              toast.info('Mute feature coming soon');
+              setShowChatMenu(false);
+            }}
+            className={`flex items-center w-full px-4 py-3 gap-3 ${theme === "dark" ? "hover:bg-[#202c33]" : "hover:bg-gray-100"}`}
+          >
             <FaVolumeMute className="h-4 w-4" />
             <span>Mute Notifications</span>
           </button>
           <div className={`border-t ${theme === "dark" ? "border-gray-700" : "border-gray-200"} my-1`}></div>
-          <button className={`flex items-center w-full px-4 py-3 gap-3 ${theme === "dark" ? "hover:bg-[#202c33]" : "hover:bg-gray-100"}`}>
+          <button
+            onClick={handleClearChat}
+            className={`flex items-center w-full px-4 py-3 gap-3 ${theme === "dark" ? "hover:bg-[#202c33]" : "hover:bg-gray-100"}`}
+          >
             <FaTrash className="h-4 w-4" />
             <span>Clear Chat</span>
           </button>
-          <button className={`flex items-center w-full px-4 py-3 gap-3 text-red-500 ${theme === "dark" ? "hover:bg-[#202c33]" : "hover:bg-gray-100"}`}>
+          <button
+            onClick={handleBlockContact}
+            className={`flex items-center w-full px-4 py-3 gap-3 text-red-500 ${theme === "dark" ? "hover:bg-[#202c33]" : "hover:bg-gray-100"}`}
+          >
             <FaBan className="h-4 w-4" />
             <span>Block Contact</span>
           </button>
@@ -311,11 +373,34 @@ const groupedMessages = Array.isArray(messages)
 
     </div>
 
+    {showSearch && (
+      <div className={`p-3 border-b ${theme === "dark" ? "border-gray-600 bg-[#202c33]" : "border-gray-200 bg-white"}`}>
+        <div className="relative">
+          <FaSearch className="absolute left-3 top-3 h-4 w-4 text-gray-400" />
+          <input
+            type="text"
+            placeholder="Search messages..."
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            className={`w-full pl-10 pr-10 py-2 rounded-lg focus:outline-none ${theme === "dark" ? "bg-[#2a3942] text-white" : "bg-gray-100 text-black"}`}
+          />
+          <button
+            onClick={() => {
+              setShowSearch(false);
+              setSearchQuery("");
+            }}
+            className="absolute right-3 top-3"
+          >
+            <FaTimes className="h-4 w-4 text-gray-400" />
+          </button>
+        </div>
+      </div>
+    )}
+
     </div>
 
     <div className={`flex-1 p-4 overflow-y-auto ${theme === "dark" ? "bg-[#191a1a]" : "bg-[rgb(241,236,229)]"} `}>
-      {/* {Object.entries(groupedMessages).map((date,msgs)=>( */}
-      {Object.entries(groupedMessages).map(([date, msgs]) => (
+      {Object.entries(filteredMessages).map(([date, msgs]) => (
         <React.Fragment key={date}>
           {renderDateSeparator(new Date(date))}
                 {msgs.map((msg) => (
@@ -428,6 +513,7 @@ const groupedMessages = Array.isArray(messages)
     </div>
 
   </div>
+  )}
   <VideoCallManager socket={socket}/> 
 
   </>
