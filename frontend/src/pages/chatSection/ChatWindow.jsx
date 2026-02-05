@@ -4,7 +4,7 @@ import useUserStore from "../../store/useUserStore";
 import { useChatStore } from "../../store/chatStore";
 import {isToday,isYesterday,format} from "date-fns";
 import EmojiPicker from "emoji-picker-react";
-import { FaArrowLeft, FaEllipsisH, FaEllipsisV, FaFile, FaImage, FaLock, FaPaperclip, FaPaperPlane, FaSmile, FaTimes, FaVideo } from "react-icons/fa";
+import { FaArrowLeft, FaEllipsisH, FaEllipsisV, FaFile, FaImage, FaLock, FaPaperclip, FaPaperPlane, FaSmile, FaTimes, FaVideo, FaSearch, FaBan, FaTrash, FaVolumeMute, FaUserCircle } from "react-icons/fa";
 import whatsappImage from "../../images/whatsapp_image.png";
 import { object } from "yup";
 import MessageBubble from "./MessageBubble";
@@ -19,6 +19,7 @@ function ChatWindow({selectedContact, setSelectedContact}) {
   const [message, setMessage] = useState("");
   const [showEmojiPicker, setShowEmojiPicker] = useState(false);
   const [showFileMenu, setShowFileMenu] = useState(false);
+  const [showChatMenu, setShowChatMenu] = useState(false);
   const [filePreview, setFilePreview] = useState(null);
   const [selectedFile, setSelectedFile] = useState(null);
 
@@ -26,6 +27,7 @@ function ChatWindow({selectedContact, setSelectedContact}) {
   const messagesEndRef = useRef(null);
   const emojiPickerRef = useRef(null);
   const fileInputRef = useRef(null);
+  const chatMenuRef = useRef(null);
 
   const { theme } = useThemeStore();
   const { user } = useUserStore();
@@ -272,14 +274,40 @@ const groupedMessages = Array.isArray(messages)
 
     </div>
 
-    <div className={`flex items-center space-x-4 `}>
+    <div className={`flex items-center space-x-4 relative`}>
       <button className="focus:outline-none" onClick={handleVideoCall} title="Start video call">
         <FaVideo className="h-5 w-5 text-green-500 hover:text-green-600" />
       </button>
 
-      <button className="focus:outline-none">
+      <button className="focus:outline-none" onClick={() => setShowChatMenu(!showChatMenu)}>
         <FaEllipsisV className="h-5 w-5" />
       </button>
+
+      {showChatMenu && (
+        <div ref={chatMenuRef} className={`absolute top-10 right-0 w-56 rounded-lg shadow-lg py-2 z-50 ${theme === "dark" ? "bg-[#2a3942] text-white" : "bg-white text-gray-800"}`}>
+          <button className={`flex items-center w-full px-4 py-3 gap-3 ${theme === "dark" ? "hover:bg-[#202c33]" : "hover:bg-gray-100"}`}>
+            <FaUserCircle className="h-4 w-4" />
+            <span>Contact Info</span>
+          </button>
+          <button className={`flex items-center w-full px-4 py-3 gap-3 ${theme === "dark" ? "hover:bg-[#202c33]" : "hover:bg-gray-100"}`}>
+            <FaSearch className="h-4 w-4" />
+            <span>Search</span>
+          </button>
+          <button className={`flex items-center w-full px-4 py-3 gap-3 ${theme === "dark" ? "hover:bg-[#202c33]" : "hover:bg-gray-100"}`}>
+            <FaVolumeMute className="h-4 w-4" />
+            <span>Mute Notifications</span>
+          </button>
+          <div className={`border-t ${theme === "dark" ? "border-gray-700" : "border-gray-200"} my-1`}></div>
+          <button className={`flex items-center w-full px-4 py-3 gap-3 ${theme === "dark" ? "hover:bg-[#202c33]" : "hover:bg-gray-100"}`}>
+            <FaTrash className="h-4 w-4" />
+            <span>Clear Chat</span>
+          </button>
+          <button className={`flex items-center w-full px-4 py-3 gap-3 text-red-500 ${theme === "dark" ? "hover:bg-[#202c33]" : "hover:bg-gray-100"}`}>
+            <FaBan className="h-4 w-4" />
+            <span>Block Contact</span>
+          </button>
+        </div>
+      )}
 
     </div>
 
