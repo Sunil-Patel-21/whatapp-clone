@@ -183,63 +183,19 @@ function Status() {
               <img
                 src={user.profilePicture}
                 alt="Profile"
-                className="w-12 h-12 rounded-full object-cover"
+                className={`w-12 h-12 rounded-full object-cover ${
+                  userStatuses ? 'ring-2 ring-green-500 ring-offset-2' : ''
+                }`}
               />
-              {userStatuses ? (
-                <>
-                  <svg
-                    className="absolute top-0 left-0 w-12 h-12 "
-                    viewBox="0 0 100 100"
-                  >
-                    {userStatuses.statuses.map((_, index) => {
-                      const circumference = 2 * Math.PI * 48;
-                      const segmenthLength =
-                        circumference / userStatuses.statuses.length;
-                      const offset = segmenthLength * index;
-                      return (
-                        <circle
-                          key={index}
-                          cx="50"
-                          cy="50"
-                          r="48"
-                          fill="none"
-                          stroke={
-                            theme === "dark"
-                              ? "rgb(17,27,33)"
-                              : "rgb(255,255,255)"
-                          }
-                          strokeWidth="4"
-                          strokeDasharray={`${segmenthLength - 5} 5`}
-                          strokeDashoffset={-offset}
-                          transform="rotate(-90 50 50)"
-                        />
-                      );
-                    })}
-
-                    <button
-                      className="absolute bottom-0 right-0 bg-green-500 text-white p-1 rounded-full"
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        setShowCreateModal(true);
-                      }}
-                    >
-                      <FaPlus className="h-2 w-2" />
-                    </button>
-                  </svg>
-                </>
-              ) : (
-                <>
-                  <button
-                    className="absolute bottom-0 right-0 bg-green-500 text-white p-1 rounded-full"
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      setShowCreateModal(true);
-                    }}
-                  >
-                    <FaPlus className="h-2 w-2" />
-                  </button>
-                </>
-              )}
+              <button
+                className="absolute bottom-0 right-0 bg-green-500 text-white p-1 rounded-full"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  setShowCreateModal(true);
+                }}
+              >
+                <FaPlus className="h-2 w-2" />
+              </button>
             </div>
 
             <div className="flex flex-col items-start flex-1">
@@ -248,7 +204,7 @@ function Status() {
                 className={`text-sm  ${theme === "dark" ? "text-gray-400" : "text-gray-500"}`}
               >
                 {userStatuses
-                  ? `${userStatuses.statuses.length} Status ${userStatuses?.statuses.length > 1 ? "es" : ""} ${formatTimestamp(userStatuses?.statuses[userStatuses.statuses.length - 1].timestamp)}`
+                  ? `${userStatuses.statuses.length} Status${userStatuses?.statuses.length > 1 ? "es" : ""} • ${formatTimestamp(userStatuses?.statuses[userStatuses.statuses.length - 1].createdAt || userStatuses?.statuses[userStatuses.statuses.length - 1].timestamp)}`
                   : "Tab to add status"}
               </p>
             </div>
