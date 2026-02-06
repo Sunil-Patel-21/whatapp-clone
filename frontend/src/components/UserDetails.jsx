@@ -22,13 +22,15 @@ const UserDetails = () => {
   const [showAboutEmoji, setShowAboutEmoji] = useState(false);
 
   const [loading, setLoading] = useState(false);
+  
+  const fileInputRef = React.useRef(null);
 
   const {user,setUser} = useUserStore();
   const {theme} = useThemeStore();
 
   useEffect(()=>{
     if(user){
-      setName(user.name || '');
+      setName(user.username || '');
       setAbout(user.about || '');
     }
   },[user])
@@ -56,25 +58,33 @@ const handleSave = async (field) => {
       setIsEditingAbout(false);
       setShowAboutEmoji(false);
     }
-
-    if (profilePicture && field === "profilePicture") {
+    else if (field === "profile" && profilePicture) {
       formData.append("media", profilePicture);
     }
 
     const updated = await updateUserProfile(formData);
     setUser(updated?.data);
-    setProfilePicture(null);
-    setPreview(null);
+    
+    if (field === "profile") {
+      setProfilePicture(null);
+      setPreview(null);
+      if (fileInputRef.current) {
+        fileInputRef.current.value = '';
+      }
+    }
+    
     toast.success("Profile updated successfully");
     setLoading(false);
   } catch (error) {
     console.error(error);
     toast.error(error?.message || "Failed to update profile");
+    setLoading(false);
   }
 };
 
 
-  const handleEmojiSelect = (emoji,field)=>{
+  const handleEmojiSelect = (emojiObject,field)=>{
+    const emoji = emojiObject.emoji;
     if(field === "name"){
       setName((prevName) => prevName + emoji);
       setShowNameEmoji(false);
@@ -121,6 +131,7 @@ const handleSave = async (field) => {
                     <input 
                       type="file" 
                       id='profileUpload'
+                      ref={fileInputRef}
                       accept='image/*'
                       onChange={handleImageChange}
                       className='hidden'
@@ -133,11 +144,10 @@ const handleSave = async (field) => {
               <div className='flex items-center justify-center gap-4 mt-4'>
                 <button 
                   className='bg-green-500 hover:bg-green-700 text-white px-4 py-2 rounded'
-                  onClick={() => {
-                    handleSave("profile")
-                  }}
+                  onClick={() => handleSave("profile")}
+                  disabled={loading}
                 >
-                  {loading ? "Saving..." : "change"} 
+                  {loading ? "Saving..." : "Change"} 
                 </button>
 
                 <button 
@@ -145,7 +155,11 @@ const handleSave = async (field) => {
                   onClick={() => {
                     setProfilePicture(null);
                     setPreview(null);
+                    if (fileInputRef.current) {
+                      fileInputRef.current.value = '';
+                    }
                   }}
+                  disabled={loading}
                 >
                   Discard 
                 </button>
@@ -163,6 +177,7 @@ const handleSave = async (field) => {
                     value={name}
                     onChange={(e) => setName(e.target.value)}
                     className={`w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-green-500 ${theme === "dark" ? "bg-gray-700 text-white" : "bg-white text-black"}`}
+                    autoComplete="off"
                   />
                 ):(
                   <span className='w-full px-3 py-2'>{user?.username || name}</span>
@@ -229,6 +244,7 @@ const handleSave = async (field) => {
                     value={about}
                     onChange={(e) => setAbout(e.target.value)}
                     className={`w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-green-500 ${theme === "dark" ? "bg-gray-700 text-white" : "bg-white text-black"}`}
+                    autoComplete="off"
                   />
                 ):(
                   <span className='w-full px-3 py-2'>{user?.about || about}</span>
