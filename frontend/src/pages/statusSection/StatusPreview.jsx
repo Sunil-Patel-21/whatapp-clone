@@ -1,7 +1,7 @@
-import React, { useEffect } from "react";
-import { motion } from "framer-motion";
+import React, { useEffect, useRef, useState } from "react";
+import { motion, AnimatePresence } from "framer-motion";
 import formatTimestamp from "../../utils/FormatTime";
-import { FaTimes, FaTrash, FaChevronLeft, FaChevronRight } from "react-icons/fa";
+import { FaTimes, FaTrash, FaChevronLeft, FaChevronRight, FaEllipsisV } from "react-icons/fa";
 
 function StatusPreview({
   contact,
@@ -14,11 +14,13 @@ function StatusPreview({
   onDelete,
   loading,
 }) {
-  const [progress, setProgress] = React.useState(0);
-  const [showViewers, setShowViewers] = React.useState(false);
+  const [progress, setProgress] = useState(0);
+  const [showMenu, setShowMenu] = useState(false);
+  const menuRef = useRef(null);
 
   const currentStatus = contact?.statuses[currentIndex];
   const isOwnerStatus = currentUser?._id === contact.id;
+
   useEffect(() => {
     setProgress(0);
     let current = 0;
@@ -40,9 +42,22 @@ function StatusPreview({
     return () => clearInterval(interval);
   }, [currentIndex, onNext, onClose, contact.statuses.length]);
 
-  const handleViewersToggle = () => {
-    setShowViewers(!showViewers);
-  };
+  // Close menu on click outside
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (menuRef.current && !menuRef.current.contains(event.target)) {
+        setShowMenu(false);
+      }
+    };
+
+    if (showMenu) {
+      document.addEventListener('mousedown', handleClickOutside);
+    }
+
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
+  }, [showMenu]);
 
   const handleDeleteStatus = (e) => {
     e.stopPropagation();
@@ -51,33 +66,36 @@ function StatusPreview({
         onDelete(currentStatus.id);
       }
     }
+    setShowMenu(false);
   };
 
   if (!currentStatus) return null;
 
   return (
-    <motion.div
-      initial={{ opacity: 0 }}
-      animate={{ opacity: 1 }}
-      exit={{ opacity: 0 }}
-      className="fixed inset-0 w-full h-full bg-black z-50 flex items-center justify-center"
-      onClick={onClose}
-    >
-      <div
-        className="relative w-full max-w-md h-full mx-auto"
-        onClick={(e) => e.stopPropagation()}
+    <AnimatePresence>
+      <motion.div
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        exit={{ opacity: 0 }}
+        transition={{ duration: 0.2 }}
+        className="fixed inset-0 bg-black z-50"
+        onClick={onClose}
       >
-        <div className="w-full h-full bg-black relative overflow-hidden">
+        <div
+          className="relative w-full h-full flex flex-col"
+          onClick={(e) => e.stopPropagation()}
+        >
           {/* Progress bars */}
-          <div className="absolute top-0 left-0 right-0 flex gap-1 p-4 z-20">
+          <div className="absolute top-2 left-2 right-2 flex gap-1 z-30">
             {contact?.statuses.map((_, index) => (
               <div
-                className="h-1 bg-gray-600 flex-1 rounded overflow-hidden"
+                className="h-0.5 bg-white/30 flex-1 rounded-full overflow-hidden"
                 key={index}
               >
-                <div
-                  className="h-full bg-white transition-all duration-100 ease-linear"
-                  style={{
+                <motion.div
+                  className="h-full bg-white rounded-full"
+                  initial={{ width: 0 }}
+                  animate={{
                     width:
                       index < currentIndex
                         ? "100%"
@@ -85,66 +103,92 @@ function StatusPreview({
                           ? `${progress}%`
                           : "0%",
                   }}
+                  transition={{ duration: 0.1, ease: "linear" }}
                 />
               </div>
             ))}
           </div>
 
           {/* Header */}
-          <div className="absolute top-12 left-0 right-0 z-20 px-4">
+          <div className="absolute top-5 left-2 right-2 z-30">
             <div className="flex items-center justify-between">
-              <div className="flex items-center space-x-3">
+              <div className="flex items-center gap-3">
                 <img
                   src={contact?.avatar}
                   alt={contact?.name}
-                  className="w-10 h-10 rounded-full object-cover border-2 border-white"
+                  className="w-10 h-10 rounded-full object-cover border-2 border-white/80"
                 />
                 <div>
-                  <p className="text-white font-semibold">{contact?.name}</p>
-                  <p className="text-gray-300 text-sm">
-                    {formatTimestamp(currentStatus?.createdAt || currentStatus?.timestamp || currentStatus?.uploadedAt)}
+                  <p className="text-white font-semibold text-sm drop-shadow-lg">
+                    {contact?.name}
+                  </p>
+                  <p className="text-white/80 text-xs drop-shadow-lg">
+                    {formatTimestamp(currentStatus?.createdAt || currentStatus?.timeStamp)}
                   </p>
                 </div>
               </div>
 
-              <div className="flex items-center space-x-2">
+              <div className="flex items-center gap-2">
                 {isOwnerStatus && (
-                  <button
-                    onClick={handleDeleteStatus}
-                    className="text-white bg-red-500 bg-opacity-70 rounded-full p-2 hover:bg-opacity-90 transition-all"
-                  >
-                    <FaTrash className="h-4 w-4" />
-                  </button>
+                  <div className="relative" ref={menuRef}>
+                    <button
+                      onClick={() => setShowMenu(!showMenu)}
+                      className="text-white p-2 hover:bg-white/10 rounded-full transition-all"
+                    >
+                      <FaEllipsisV className="h-4 w-4 drop-shadow-lg" />
+                    </button>
+
+                    {showMenu && (
+                      <motion.div
+                        initial={{ opacity: 0, scale: 0.95, y: -10 }}
+                        animate={{ opacity: 1, scale: 1, y: 0 }}
+                        exit={{ opacity: 0, scale: 0.95 }}
+                        transition={{ duration: 0.15 }}
+                        className="absolute right-0 mt-2 w-40 bg-white rounded-lg shadow-xl overflow-hidden"
+                      >
+                        <button
+                          onClick={handleDeleteStatus}
+                          className="w-full flex items-center gap-3 px-4 py-3 text-red-600 hover:bg-red-50 transition-colors text-sm font-medium"
+                        >
+                          <FaTrash className="h-3.5 w-3.5" />
+                          Delete Status
+                        </button>
+                      </motion.div>
+                    )}
+                  </div>
                 )}
+
                 <button
                   onClick={onClose}
-                  className="text-white bg-black bg-opacity-50 rounded-full p-2 hover:bg-opacity-75 transition-all"
+                  className="text-white p-2 hover:bg-white/10 rounded-full transition-all"
                 >
-                  <FaTimes className="h-4 w-4" />
+                  <FaTimes className="h-5 w-5 drop-shadow-lg" />
                 </button>
               </div>
             </div>
           </div>
 
-          {/* Status Content */}
-          <div className="w-full h-full flex items-center justify-center pt-20 pb-4">
+          {/* Status Content - Takes remaining height */}
+          <div className="flex-1 flex items-center justify-center pt-20 pb-4 px-2">
             {currentStatus.contentType === "text" ? (
-              <div className="text-white text-center p-8 max-w-sm">
-                <p className="text-xl font-medium leading-relaxed">{currentStatus.content || currentStatus.media}</p>
+              <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-teal-600 to-blue-600 rounded-2xl px-8">
+                <p className="text-white text-2xl font-medium leading-relaxed break-words text-center max-w-md">
+                  {currentStatus.content || currentStatus.media}
+                </p>
               </div>
             ) : currentStatus.contentType === "image" ? (
               <img
                 src={currentStatus.media}
                 alt="Status"
-                className="max-w-full max-h-full object-contain"
+                className="max-w-full max-h-full w-auto h-auto object-contain"
               />
             ) : currentStatus.contentType === "video" ? (
               <video
                 src={currentStatus.media}
                 controls
-                muted
                 autoPlay
-                className="max-w-full max-h-full object-contain"
+                muted
+                className="max-w-full max-h-full w-auto h-auto object-contain"
               />
             ) : null}
           </div>
@@ -153,7 +197,7 @@ function StatusPreview({
           {currentIndex > 0 && (
             <button
               onClick={onPrev}
-              className="absolute left-4 top-1/2 -translate-y-1/2 text-white bg-black bg-opacity-50 rounded-full p-3 hover:bg-opacity-75 transition-all z-10"
+              className="absolute left-4 top-1/2 -translate-y-1/2 text-white/80 hover:text-white bg-black/40 hover:bg-black/60 backdrop-blur-sm rounded-full p-3 transition-all z-20"
             >
               <FaChevronLeft className="h-5 w-5" />
             </button>
@@ -162,16 +206,14 @@ function StatusPreview({
           {currentIndex < contact.statuses.length - 1 && (
             <button
               onClick={onNext}
-              className="absolute right-4 top-1/2 -translate-y-1/2 text-white bg-black bg-opacity-50 rounded-full p-3 hover:bg-opacity-75 transition-all z-10"
+              className="absolute right-4 top-1/2 -translate-y-1/2 text-white/80 hover:text-white bg-black/40 hover:bg-black/60 backdrop-blur-sm rounded-full p-3 transition-all z-20"
             >
               <FaChevronRight className="h-5 w-5" />
             </button>
           )}
-
-
         </div>
-      </div>
-    </motion.div>
+      </motion.div>
+    </AnimatePresence>
   );
 }
 

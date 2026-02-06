@@ -80,11 +80,7 @@ const useStatusStore = create((set, get) => ({
             if (statusData.content?.trim()) {
                 formData.append("content", statusData.content);
             }
-            const { data } = await axiosInstance.post("/status", formData, {
-                headers: {
-                    "Content-Type": "multipart/form-data",
-                },
-            });
+            const { data } = await axiosInstance.post("/status", formData);
 
             // add to local state
             if (data.data) {

@@ -5,12 +5,12 @@ const response = require("../utils/responseHandler");
 
 exports.createStatus = async (req, res) => {
     try {
-        const { contentType,content } = req.body;
+        const { content } = req.body;
         const userId = req.user.userId;
-        const file = req.files;
+        const file = req.file;
 
         let mediaUrl = null;
-        let finalContentType = contentType || "text";
+        let finalContentType = "text";
 
         // handle file upload
         if(file){

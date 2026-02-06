@@ -98,12 +98,14 @@ function Status() {
     if (!newStatus.trim() && !selectedFile) return;
     try {
       await createStatus({ content: newStatus, file: selectedFile });
+      toast.success("Status created successfully");
       setNewStatus("");
       setSelectedFile(null);
       setFilePreview(null);
       setShowCreateModal(false);
     } catch (error) {
       console.error("Error while creating status : ", error);
+      toast.error(error?.response?.data?.message || "Failed to create status");
     }
   };
 
