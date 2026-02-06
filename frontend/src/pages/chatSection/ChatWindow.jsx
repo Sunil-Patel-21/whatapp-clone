@@ -78,8 +78,10 @@ useEffect(() => {
 
   if (conversation?._id) {
     fetchMessages(conversation._id);
+  } else {
+    console.warn('No conversation found for selected contact');
   }
-}, [selectedContact, conversations]);
+}, [selectedContact?._id, conversations?.length]);
 
 
   useEffect( () => {

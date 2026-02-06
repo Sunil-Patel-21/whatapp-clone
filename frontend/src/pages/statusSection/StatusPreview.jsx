@@ -22,10 +22,15 @@ function StatusPreview({
   const isOwnerStatus = currentUser?._id === contact.id;
 
   useEffect(() => {
+    if (!currentStatus) return;
+    
     setProgress(0);
     let current = 0;
+    let isMounted = true;
 
     const interval = setInterval(() => {
+      if (!isMounted) return;
+      
       current += 1;
       setProgress(current);
 
@@ -39,8 +44,11 @@ function StatusPreview({
       }
     }, 50);
 
-    return () => clearInterval(interval);
-  }, [currentIndex, onNext, onClose, contact.statuses.length]);
+    return () => {
+      isMounted = false;
+      clearInterval(interval);
+    };
+  }, [currentIndex, currentStatus, onNext, onClose, contact.statuses.length]);
 
   // Close menu on click outside
   useEffect(() => {

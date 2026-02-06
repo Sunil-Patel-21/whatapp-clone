@@ -9,11 +9,20 @@ exports.createStatus = async (req, res) => {
         const userId = req.user.userId;
         const file = req.file;
 
+        if (!userId) {
+            return response(res, 401, "Unauthorized");
+        }
+
         let mediaUrl = null;
         let finalContentType = "text";
 
         // handle file upload
         if(file){
+            // Validate file size (max 50MB)
+            if (file.size > 50 * 1024 * 1024) {
+                return response(res, 400, "File size exceeds 50MB limit");
+            }
+            
             const uploadFile = await uploadFileToCloudinary(file);
             if(!uploadFile?.secure_url){
                 return response(res,400,"failed to upload media file");
@@ -27,6 +36,10 @@ exports.createStatus = async (req, res) => {
                 return response(res,400,"unsupported file type");
             }
         }else if(content?.trim()){
+            // Validate text content length
+            if (content.trim().length > 500) {
+                return response(res, 400, "Status text exceeds 500 characters");
+            }
             finalContentType = "text";
         }else{
             return response(res,400,"status content is required");
@@ -47,13 +60,22 @@ exports.createStatus = async (req, res) => {
         .populate("user","username profilePicture")
         .populate("viewers","username profilePicture");
 
+        if (!populatedStatus) {
+            return response(res, 500, "Failed to create status");
+        }
+
          // emit socket event 
         if(req.io && req.socketUserMap){
-            // broadcast to all connecting users except the creator
-            for(const [connectedUserId, socketId] of req.socketUserMap){
-                if(connectedUserId !== userId){
-                    req.io.to(socketId).emit("new_status",populatedStatus);
+            try {
+                // broadcast to all connecting users except the creator
+                for(const [connectedUserId, socketId] of req.socketUserMap){
+                    if(connectedUserId !== userId){
+                        req.io.to(socketId).emit("new_status",populatedStatus);
+                    }
                 }
+            } catch (socketError) {
+                console.error("Socket broadcast error:", socketError);
+                // Don't fail the request if socket fails
             }
         }
 
@@ -87,6 +109,9 @@ exports.viewStatus = async (req, res) => {
         if(!status){
             return response(res,404,"status not found");
         }
+        
+        const statusOwnerId = status.user.toString();
+        
         // check if user has already viewed the status
         if(!status.viewers.includes(userId)){
             status.viewers.push(userId);
@@ -98,19 +123,16 @@ exports.viewStatus = async (req, res) => {
 
             // emit socket event 
             if(req.io && req.socketUserMap){
-                // broadcast to all connecting users except the creator
-                const statusOwnerSocketId = req.socketUserMap.get(status.user._id.toString());
-                if(statusOwnerSocketId){
-                    const viewData = {
-                        statusId,
-                        viewedId: userId,
-                        totalViewers: updatedStatus.viewers.length,
-                        viewers: updatedStatus.viewers
+                try {
+                    // broadcast to status owner
+                    const statusOwnerSocketId = req.socketUserMap.get(statusOwnerId);
+                    if(statusOwnerSocketId){
+                        req.io.to(statusOwnerSocketId).emit("status_viewed", statusId, updatedStatus.viewers);
+                    } else {
+                        console.log("Status owner not connected");
                     }
-
-                    req.io.to(statusOwnerSocketId).emit("status_viewed",viewData)
-                }else{
-                    console.log("Status owner not connected");
+                } catch (socketError) {
+                    console.error("Socket broadcast error:", socketError);
                 }
             }
         }else{

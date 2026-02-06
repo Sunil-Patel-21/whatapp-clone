@@ -33,11 +33,10 @@ function StatusList({ contact, onPreview, theme }) {
         <p
           className={`text-sm ${theme === "dark" ? "text-gray-400" : "text-gray-500"}`}
         >
-          
           {formatTimestamp(
-            contact?.statuses[contact.statuses.length - 1].timestamp,
+            contact?.statuses[contact.statuses.length - 1]?.timeStamp || 
+            contact?.statuses[contact.statuses.length - 1]?.createdAt
           )}
-          
         </p>
       </div>
     </div>

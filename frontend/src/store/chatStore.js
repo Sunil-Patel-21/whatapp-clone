@@ -18,16 +18,19 @@
                 return;
             }
 
-            // remove existing listeners
+            // remove existing listeners to prevent duplicates
             socket.off("receive_message");
             socket.off("user_typing");
             socket.off("user_status");
             socket.off("message_send");
             socket.off("message_error");
             socket.off("message_deleted");
+            socket.off("reaction_updated");
+            socket.off("message_status_update");
 
             // listen for incoming message
             socket.on("receive_message", (message) => {
+                if (!message) return;
                 get().receiveMessage(message);
             })
 

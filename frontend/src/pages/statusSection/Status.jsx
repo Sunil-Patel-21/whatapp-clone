@@ -46,27 +46,25 @@ function Status() {
 
   // Sync previewContact with updated statuses
   useEffect(() => {
-    if (previewContact) {
-      const updatedContact = previewContact.id === user?._id 
-        ? userStatuses 
-        : otherStatuses.find(c => c.id === previewContact.id);
-      
-      if (updatedContact) {
-        setPreviewContact(updatedContact);
-        // Close preview if all statuses are deleted
-        if (updatedContact.statuses.length === 0) {
-          handlePreviewClose();
-        }
-        // Adjust index if current status was deleted
-        else if (currentStatusIndex >= updatedContact.statuses.length) {
-          setCurrentStatusIndex(updatedContact.statuses.length - 1);
-        }
-      } else {
-        // Contact has no more statuses
-        handlePreviewClose();
+    if (!previewContact) return;
+    
+    const updatedContact = previewContact.id === user?._id 
+      ? userStatuses 
+      : otherStatuses.find(c => c.id === previewContact.id);
+    
+    if (!updatedContact || updatedContact.statuses.length === 0) {
+      handlePreviewClose();
+      return;
+    }
+    
+    // Only update if statuses count changed
+    if (updatedContact.statuses.length !== previewContact.statuses.length) {
+      setPreviewContact(updatedContact);
+      if (currentStatusIndex >= updatedContact.statuses.length) {
+        setCurrentStatusIndex(updatedContact.statuses.length - 1);
       }
     }
-  }, [userStatuses, otherStatuses]);
+  }, [statuses]);
 
   useEffect(() => {
     fetchStatuses();

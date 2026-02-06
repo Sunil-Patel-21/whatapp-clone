@@ -173,31 +173,41 @@ const initializeSocket = (server) => {
 
         // handle disconnection
         const handleDisconnected = async()=>{
-            if(!userId) return ;
+            if(!userId) {
+                console.log('Disconnect called but userId is null');
+                return;
+            }
             try {
                 onlineUsers.delete(userId);
                 // clear all typing timeouts
-                    if(typingUsers.has(userId)){
-                        const userTyping = typingUsers.get(userId);
-                        Object.keys(userTyping).forEach((key) => {
+                if(typingUsers.has(userId)){
+                    const userTyping = typingUsers.get(userId);
+                    Object.keys(userTyping).forEach((key) => {
                         if(key.endsWith("_timeout")){
                             clearTimeout(userTyping[key]);
                         }
-                    })
-                typingUsers.delete(userId);
+                    });
+                    typingUsers.delete(userId);
                 }
 
-                await User.findByIdAndUpdate(userId,{isOnline:false,lastSeen:Date.now()});
-                io.emit("user_status", {
+                const updatedUser = await User.findByIdAndUpdate(
                     userId,
-                    isOnline:false,
-                    lastSeen:Date.now()
-                });
+                    {isOnline:false, lastSeen:Date.now()},
+                    {new: true}
+                );
+                
+                if (updatedUser) {
+                    io.emit("user_status", {
+                        userId,
+                        isOnline:false,
+                        lastSeen:Date.now()
+                    });
+                }
 
                 socket.leave(userId);
                 console.log(`User ${userId} disconnected`);
             } catch (error) {
-                console.error("Error : ",error.message);
+                console.error("Error in handleDisconnected:", error.message);
             }
         }
 

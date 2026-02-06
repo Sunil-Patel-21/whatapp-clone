@@ -7,6 +7,16 @@ exports.sendMessage = async (req, res) => {
     try {
         const { senderId, receiverId, messageStatus, content } = req.body;
         const file = req.file;
+        
+        // Validate required fields
+        if (!senderId || !receiverId) {
+            return response(res, 400, "Sender and receiver IDs are required");
+        }
+        
+        if (senderId === receiverId) {
+            return response(res, 400, "Cannot send message to yourself");
+        }
+        
         const participants = [senderId, receiverId].sort();
 
         // check if conversation already exists
