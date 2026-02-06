@@ -132,28 +132,24 @@ useEffect(() => {
 
 const handleSendMessage = async () => {
   if (!selectedContact) return;
-
   if (!message.trim() && !selectedFile) return;
 
+  const formData = new FormData();
+  formData.append("senderId", user?._id);
+  formData.append("receiverId", selectedContact?._id);
+  formData.append("messageStatus", onlineStatus ? "delivered" : "send");
+
+  if (message.trim()) {
+    formData.append("content", message.trim());
+  }
+
+  if (selectedFile) {
+    formData.append("media", selectedFile);
+  }
+
   try {
-    const formData = new FormData();
-    formData.append("senderId", user?._id);
-    formData.append("receiverId", selectedContact?._id);
-
-    const status = onlineStatus ? "delivered" : "send";
-    formData.append("messageStatus", status);
-
-    if (message.trim()) {
-      formData.append("content", message.trim());
-    }
-
-    if (selectedFile) {
-      formData.append("media", selectedFile);
-    }
-
     await sendMessage(formData);
-
-    // reset all states
+    
     setMessage("");
     setSelectedFile(null);
     setFilePreview(null);
@@ -162,6 +158,7 @@ const handleSendMessage = async () => {
     }
   } catch (error) {
     console.error("Error sending message:", error);
+    toast.error("Failed to send message");
   }
 };
 

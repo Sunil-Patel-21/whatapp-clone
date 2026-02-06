@@ -186,33 +186,32 @@
             }
         },
 
-        sendMessage: async (formData)=>{
+        sendMessage: async (formData) => {
             const senderId = formData.get("senderId");
             const receiverId = formData.get("receiverId");
             const media = formData.get("media");
             const content = formData.get("content");
             const messageStatus = formData.get("messageStatus");
 
-            const {conversations} = get();
+            const { conversations } = get();
             let conversationId = null;
-            if(Array.isArray(conversations) && conversations.length > 0){
-                const conversation = conversations.find((con)=> con.participants.some((p) => p._id === senderId ) && con.participants.some((p) => p._id === receiverId ));
-                if(conversation){
+            if (Array.isArray(conversations) && conversations.length > 0) {
+                const conversation = conversations.find((con) =>
+                    con.participants.some((p) => p._id === senderId) &&
+                    con.participants.some((p) => p._id === receiverId)
+                );
+                if (conversation) {
                     conversationId = conversation._id;
-                    set({currentConversation: conversationId});
+                    set({ currentConversation: conversationId });
                 }
             }
 
-            // temp message before actual response
+            // Create optimistic message
             const tempId = `temp-${Date.now()}`;
             const optimisticMessage = {
                 _id: tempId,
-                sender: {
-                    _id: senderId
-                },
-                receiver: {
-                    _id: receiverId
-                },
+                sender: { _id: senderId },
+                receiver: { _id: receiverId },
                 conversation: conversationId,
                 imageOrVideoUrl: media && media instanceof File ? URL.createObjectURL(media) : null,
                 content: content || "",
@@ -221,36 +220,34 @@
                 createdAt: new Date().toISOString()
             };
 
+            // Add optimistic message
             set((state) => ({
                 messages: [...state.messages, optimisticMessage],
             }));
 
             try {
-                const {data} = await axiosInstance.post("/chats/send-message", formData,{
-                    headers: {
-                        "Content-Type": "multipart/form-data",
-                    },
-                });
+                const { data } = await axiosInstance.post("/chats/send-message", formData);
                 const messageData = data.data || data;
-                // replace optimistic message with actual response
+
+                // Replace optimistic message with server response
                 set((state) => ({
                     messages: state.messages.map((msg) =>
                         msg._id === tempId ? messageData : msg
                     ),
-                }))
+                }));
 
                 return messageData;
             } catch (error) {
                 console.error("Error sending message:", error);
+                // Mark message as failed
                 set((state) => ({
                     messages: state.messages.map((msg) =>
-                        msg._id === tempId ? {...msg,messageStatus:"failed"} : msg
+                        msg._id === tempId ? { ...msg, messageStatus: "failed" } : msg
                     ),
                     error: error?.response?.data?.message || error?.message
                 }));
                 throw error;
             }
-            
         },
 
         receiveMessage: (message) => {

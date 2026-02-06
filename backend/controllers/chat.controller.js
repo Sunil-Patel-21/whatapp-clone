@@ -5,42 +5,43 @@ const response = require("../utils/responseHandler");
 
 exports.sendMessage = async (req, res) => {
     try {
-        const { senderId, receiverId, messageStatus,content } = req.body;
-        const file = req.files;
+        const { senderId, receiverId, messageStatus, content } = req.body;
+        const file = req.file;
         const participants = [senderId, receiverId].sort();
 
-        // check if conversation all ready exists.
+        // check if conversation already exists
         let conversation = await Conversation.findOne({
             participants: participants
-        })
+        });
 
         if (!conversation) {
             conversation = new Conversation({
                 participants,
-            })
+            });
+            await conversation.save();
         }
-        await conversation.save();
+
         let imageOrVideoUrl = null;
-        let contentType = null; 
+        let contentType = null;
 
         // handle file upload
-        if(file){
+        if (file) {
             const uploadFile = await uploadFileToCloudinary(file);
-            if(!uploadFile?.secure_url){
-                return response(res,400,"failed to upload media file");
+            if (!uploadFile?.secure_url) {
+                return response(res, 400, "failed to upload media file");
             }
             imageOrVideoUrl = uploadFile.secure_url;
-            if(file.mimetype.startsWith("image")){
+            if (file.mimetype.startsWith("image")) {
                 contentType = "image";
-            }else if (file.mimetype.startsWith("video")) {
+            } else if (file.mimetype.startsWith("video")) {
                 contentType = "video";
-            }else{
-                return response(res,400,"unsupported file type");
+            } else {
+                return response(res, 400, "unsupported file type");
             }
-        }else if(content?.trim()){
+        } else if (content?.trim()) {
             contentType = "text";
-        }else{
-            return response(res,400,"message content is required");
+        } else {
+            return response(res, 400, "message content is required");
         }
 
         const message = new Message({
@@ -53,33 +54,29 @@ exports.sendMessage = async (req, res) => {
             messageStatus
         });
         await message.save();
-        if(imageOrVideoUrl || content){
-            conversation.lastMessage = message?._id;
-        }
-        conversation.unreadCount = conversation?.unreadCount + 1;
+
+        conversation.lastMessage = message._id;
+        conversation.unreadCount = (conversation.unreadCount || 0) + 1;
         await conversation.save();
 
         const populatedMessage = await Message.findById(message._id)
-        .populate("sender","username profilePicture")
-        .populate("receiver","username profilePicture");
+            .populate("sender", "username profilePicture")
+            .populate("receiver", "username profilePicture");
 
-        // emit socket event 
-        if(req.io && req.socketUserMap){
-            // broadcast to all connecting users except the sender
+        // emit socket event to receiver only
+        if (req.io && req.socketUserMap) {
             const receiverSocketId = req.socketUserMap.get(receiverId);
-            if(receiverSocketId){
-                req.io.to(receiverSocketId).emit("receive_message",populatedMessage);
-                message.messageStatus = "delivered";
-                await message.save();
+            if (receiverSocketId) {
+                req.io.to(receiverSocketId).emit("receive_message", populatedMessage);
             }
         }
 
-        return response(res,200,"message sent successfully",populatedMessage);
+        return response(res, 200, "message sent successfully", populatedMessage);
     } catch (error) {
-        console.error(error);
-        return response(res,500,"Internal server error");
+        console.error("Send message error:", error);
+        return response(res, 500, "Internal server error");
     }
-}
+};
 
 // get all conversation
 exports.getConversation = async (req,res)=>{
