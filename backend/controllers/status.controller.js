@@ -139,11 +139,9 @@ exports.deleteStatus = async (req, res) => {
 
         // emit socket event 
         if(req.io && req.socketUserMap){
-            // broadcast to all connecting users except the creator
+            // broadcast to all connecting users including the creator
             for(const [connectedUserId, socketId] of req.socketUserMap){
-                if(connectedUserId !== userId){
-                    req.io.to(socketId).emit("status_deleted",statusId);
-                }
+                req.io.to(socketId).emit("status_deleted",statusId);
             }
         }
 

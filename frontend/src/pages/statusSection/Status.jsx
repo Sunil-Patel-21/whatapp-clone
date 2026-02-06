@@ -44,6 +44,30 @@ function Status() {
   const userStatuses = getUserStatuses(user?._id);
   const otherStatuses = getOthersStatuses(user?._id);
 
+  // Sync previewContact with updated statuses
+  useEffect(() => {
+    if (previewContact) {
+      const updatedContact = previewContact.id === user?._id 
+        ? userStatuses 
+        : otherStatuses.find(c => c.id === previewContact.id);
+      
+      if (updatedContact) {
+        setPreviewContact(updatedContact);
+        // Close preview if all statuses are deleted
+        if (updatedContact.statuses.length === 0) {
+          handlePreviewClose();
+        }
+        // Adjust index if current status was deleted
+        else if (currentStatusIndex >= updatedContact.statuses.length) {
+          setCurrentStatusIndex(updatedContact.statuses.length - 1);
+        }
+      } else {
+        // Contact has no more statuses
+        handlePreviewClose();
+      }
+    }
+  }, [userStatuses, otherStatuses]);
+
   useEffect(() => {
     fetchStatuses();
     initializeSocket();
@@ -95,14 +119,6 @@ function Status() {
     try {
       await deleteStatus(statusId);
       toast.success("Status deleted successfully");
-      
-      // Navigate to next status or close if it was the last one
-      if (previewContact.statuses.length === 1) {
-        handlePreviewClose();
-      } else if (currentStatusIndex >= previewContact.statuses.length - 1) {
-        setCurrentStatusIndex(Math.max(0, currentStatusIndex - 1));
-      }
-      
       setShowOptions(false);
     } catch (error) {
       console.error("Error while deleting status : ", error);
