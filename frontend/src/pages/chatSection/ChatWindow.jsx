@@ -133,7 +133,6 @@ useEffect(() => {
 const handleSendMessage = async () => {
   if (!selectedContact) return;
 
-  // 🔧 FIX: allow text OR file
   if (!message.trim() && !selectedFile) return;
 
   try {
@@ -149,16 +148,18 @@ const handleSendMessage = async () => {
     }
 
     if (selectedFile) {
-      formData.append("media", selectedFile, selectedFile.name);
+      formData.append("media", selectedFile);
     }
 
     await sendMessage(formData);
 
-    // reset
+    // reset all states
     setMessage("");
     setSelectedFile(null);
     setFilePreview(null);
-    setShowFileMenu(false);
+    if (fileInputRef.current) {
+      fileInputRef.current.value = "";
+    }
   } catch (error) {
     console.error("Error sending message:", error);
   }
@@ -474,7 +475,7 @@ const groupedMessages = Array.isArray(messages)
       <div className="relative">
         <button 
           className="focus:outline-none"
-          onClick={()=>showFileMenu(!showFileMenu)}
+          onClick={()=>setShowFileMenu(!showFileMenu)}
         >
           <FaPaperclip className={`h-6 w-6 ${theme === "dark"?"text-gray-400" : "text-gray-500"} mt-2`}/>
         </button>

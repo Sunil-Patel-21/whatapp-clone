@@ -193,12 +193,10 @@
             const content = formData.get("content");
             const messageStatus = formData.get("messageStatus");
 
-            const socket = getSocket();
-
             const {conversations} = get();
             let conversationId = null;
-            if(conversations?.data?.length > 0){
-                const conversation = conversations.data.find((con)=> con.participants.some((p) => p._id === senderId ) && con.participants.some((p) => p._id === receiverId ));
+            if(Array.isArray(conversations) && conversations.length > 0){
+                const conversation = conversations.find((con)=> con.participants.some((p) => p._id === senderId ) && con.participants.some((p) => p._id === receiverId ));
                 if(conversation){
                     conversationId = conversation._id;
                     set({currentConversation: conversationId});
@@ -216,9 +214,9 @@
                     _id: receiverId
                 },
                 conversation: conversationId,
-                imageOrVideoUrl: media && typeof media === "string" ? URL.createObjectURL(media) : null,
-                content,
-                contentType: media ? media.type.startsWith("image") ? "image" : "video" : "text",
+                imageOrVideoUrl: media && media instanceof File ? URL.createObjectURL(media) : null,
+                content: content || "",
+                contentType: media ? (media.type.startsWith("image") ? "image" : "video") : "text",
                 messageStatus,
                 createdAt: new Date().toISOString()
             };
@@ -258,20 +256,12 @@
         receiveMessage: (message) => {
             if (!message) return;
 
-            const { messages } = get();
-            const tempIndex = messages.findIndex(
-                m => typeof m._id === "string" && m._id.startsWith("temp-")
-                );
-            if (tempIndex !== -1) {
-                // Replace temp message with server message
-                set((state) => {
-                    const newMessages = [...state.messages];
-                    newMessages[tempIndex] = message;
-                    return { messages: newMessages };
-                });
-                return;
-            }
+            const { messages, currentUser } = get();
+            
+            // Don't add if it's our own message (already added optimistically)
+            if (message.sender._id === currentUser?._id) return;
 
+            // Check if message already exists
             const exists = messages.some((m) => m._id === message._id);
             if (exists) return;
 
@@ -318,6 +308,12 @@
         },
 
         deleteMessage: async (messageId) =>{
+            if (typeof messageId === "string" && messageId.startsWith("temp-")) {
+                set((state) => ({
+                    messages: state.messages?.filter((msg) => msg._id !== messageId),
+                }))
+                return true;
+            }
             try {
                 await axiosInstance.delete(`/chats/messages/${messageId}`);
                 set((state) => ({

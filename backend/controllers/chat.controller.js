@@ -47,13 +47,13 @@ exports.sendMessage = async (req, res) => {
             conversation: conversation._id,
             sender: senderId,
             receiver: receiverId,
-            content,
+            content: content || "",
             imageOrVideoUrl,
             contentType,
             messageStatus
         });
         await message.save();
-        if(message?.content){
+        if(imageOrVideoUrl || content){
             conversation.lastMessage = message?._id;
         }
         conversation.unreadCount = conversation?.unreadCount + 1;
