@@ -18,7 +18,7 @@ function StatusPreview({
   const [showViewers, setShowViewers] = React.useState(false);
 
   const currentStatus = contact?.statuses[currentIndex];
-  const isOwnerStatus = currentUser?._id === contact._id;
+  const isOwnerStatus = currentUser?._id === contact.id;
   useEffect(() => {
     setProgress(0);
     let current = 0;
@@ -46,14 +46,10 @@ function StatusPreview({
 
   const handleDeleteStatus = (e) => {
     e.stopPropagation();
-    if (onDelete && currentStatus?._id) {
-      onDelete(currentStatus._id);
-    }
-
-    if (contact.statuses.length === 1) {
-      onClose();
-    } else {
-      onNext();
+    if (window.confirm('Delete this status?')) {
+      if (onDelete && currentStatus?.id) {
+        onDelete(currentStatus.id);
+      }
     }
   };
 

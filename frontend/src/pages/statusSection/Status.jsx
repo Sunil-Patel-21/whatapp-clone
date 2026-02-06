@@ -9,6 +9,7 @@ import { RxCross2 } from "react-icons/rx";
 import { FaCamera, FaEllipsisH, FaPlus, FaStreetView } from "react-icons/fa";
 import formatTimestamp from "../../utils/FormatTime";
 import StatusList from "./StatusList";
+import { toast } from "react-toastify";
 
 function Status() {
   const [previewContact, setPreviewContact] = React.useState(null);
@@ -93,10 +94,19 @@ function Status() {
   const handleDeleteStatus = async (statusId) => {
     try {
       await deleteStatus(statusId);
+      toast.success("Status deleted successfully");
+      
+      // Navigate to next status or close if it was the last one
+      if (previewContact.statuses.length === 1) {
+        handlePreviewClose();
+      } else if (currentStatusIndex >= previewContact.statuses.length - 1) {
+        setCurrentStatusIndex(Math.max(0, currentStatusIndex - 1));
+      }
+      
       setShowOptions(false);
-      handlePreviewClose();
     } catch (error) {
       console.error("Error while deleting status : ", error);
+      toast.error("Failed to delete status");
     }
   };
 

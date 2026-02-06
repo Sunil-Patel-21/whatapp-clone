@@ -158,7 +158,7 @@ const useStatusStore = create((set, get) => ({
             if (!acc[statusUserId]) {
                 acc[statusUserId] = {
                     id: statusUserId,
-                    name: status.user.name,
+                    name: status.user.username,
                     avatar: status.user.profilePicture,
                     statuses: []
                 }
