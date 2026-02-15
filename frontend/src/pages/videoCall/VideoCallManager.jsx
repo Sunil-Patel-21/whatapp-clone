@@ -21,25 +21,40 @@ function VideoCallManager({socket}) {
 
         // handle incoming call
         const handleIncomingCall = ({callerId,callerName,callerAvatar,callType,callId}) => {
+            console.log("📞 Incoming call from:", callerName);
             setIncomingCall({callerId,callerName,callerAvatar,callId});
             setCallType(callType);
             setCallModalOpen(true);
             setCallStatus("ringing");
         }
 
-        const handleCallEnded = ({reason})=>{
+        const handleCallEnded = ({reason}) => {
+            console.log("Call ended:", reason);
+            setCallStatus("ended");
+            setTimeout(()=>{
+                endCall();
+            },1500);
+        }
+
+        const handleCallFailed = ({reason}) => {
+            console.log("Call failed:", reason);
             setCallStatus("failed");
             setTimeout(()=>{
                 endCall();
-            },2000)
+            },2000);
         }
 
         socket.on("incoming_call",handleIncomingCall);
-        socket.on("call_failed",handleCallEnded);
+        socket.on("call_ended",handleCallEnded);
+        socket.on("call_failed",handleCallFailed);
+
+        console.log("✅ VideoCallManager listeners registered");
 
         return () => {
             socket.off("incoming_call",handleIncomingCall);
-            socket.off("call_failed",handleCallEnded);
+            socket.off("call_ended",handleCallEnded);
+            socket.off("call_failed",handleCallFailed);
+            console.log("🔴 VideoCallManager listeners cleaned");
         }
     },[socket,setIncomingCall,setCallType,setCallModalOpen,setCallStatus,endCall])
 

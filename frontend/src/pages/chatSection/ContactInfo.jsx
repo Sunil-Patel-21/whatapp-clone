@@ -9,6 +9,8 @@ function ContactInfo({ contact, theme, onClose }) {
     if (initiateCall) {
       initiateCall(contact?._id, contact?.username, contact?.profilePicture, "audio");
       onClose();
+    } else {
+      console.error("initiateCall not available");
     }
   };
 
@@ -17,6 +19,8 @@ function ContactInfo({ contact, theme, onClose }) {
     if (initiateCall) {
       initiateCall(contact?._id, contact?.username, contact?.profilePicture, "video");
       onClose();
+    } else {
+      console.error("initiateCall not available");
     }
   };
   return (

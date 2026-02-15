@@ -247,19 +247,18 @@ const groupedMessages = Array.isArray(messages)
 
   const handleVideoCall = ()=>{
     if(selectedContact){
-      // Use the user store to get the initiateCall function that was set by VideoCallManager
       const initiateCall = useUserStore.getState().initiateCall;
       
       if(initiateCall){
-        const avatar = selectedContact?.profilePicture;
         initiateCall(
           selectedContact?._id,
           selectedContact?.username,
-          avatar,
+          selectedContact?.profilePicture,
           "video"
-        )
+        );
       } else {
         console.error("initiateCall function not available");
+        toast.error("Unable to initiate call. Please refresh the page.");
       }
     }
   }
