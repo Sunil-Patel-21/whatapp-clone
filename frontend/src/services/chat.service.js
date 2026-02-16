@@ -61,3 +61,15 @@ export const clearChat = async (conversationId) => {
     }
 };
 
+export const toggleTemporaryMode = async (conversationId, isTemporaryMode, temporaryDuration) => {
+    try {
+        const response = await axiosInstance.put(
+            `/chats/conversations/${conversationId}/temporary-mode`,
+            { isTemporaryMode, temporaryDuration }
+        );
+        return response.data;
+    } catch (error) {
+        throw error.response?.data || error.message;
+    }
+};
+

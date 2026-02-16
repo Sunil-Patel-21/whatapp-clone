@@ -102,6 +102,24 @@
                 });
             });
 
+            // handle temporary mode changes
+            socket.on("temporary_mode_changed", ({ conversationId, isTemporaryMode, temporaryDuration }) => {
+                set((state) => ({
+                    conversations: state.conversations.map(conv =>
+                        conv._id === conversationId
+                            ? { ...conv, isTemporaryMode, temporaryDuration }
+                            : conv
+                    )
+                }));
+            });
+
+            // handle expired messages
+            socket.on("message_expired", (messageId) => {
+                set((state) => ({
+                    messages: state.messages.filter(msg => msg._id !== messageId)
+                }));
+            });
+
             // emit status check for all users in conversation list
             const {conversations} = get();
             if(conversations?.length > 0){
@@ -382,6 +400,21 @@
             if(!userId) return null;
             const {onlineUsers} = get();
             return onlineUsers.get(userId)?.lastSeen || null;
+        },
+
+        getCurrentConversation: () => {
+            const { conversations, currentConversation } = get();
+            return conversations.find(c => c._id === currentConversation);
+        },
+
+        updateConversationTemporaryMode: (conversationId, isTemporaryMode, temporaryDuration) => {
+            set((state) => ({
+                conversations: state.conversations.map(conv =>
+                    conv._id === conversationId
+                        ? { ...conv, isTemporaryMode, temporaryDuration }
+                        : conv
+                )
+            }));
         },
 
         cleanup: ()=>{

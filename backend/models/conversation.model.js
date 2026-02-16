@@ -12,6 +12,14 @@ const conversationSchema = new mongoose.Schema({
     unreadCount:{
         type: Number,
         default: 0
+    },
+    isTemporaryMode: {
+        type: Boolean,
+        default: false
+    },
+    temporaryDuration: {
+        type: Number, // in milliseconds
+        default: null
     }
 },
 {

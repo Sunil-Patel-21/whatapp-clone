@@ -43,7 +43,15 @@ const messageSchema = new mongoose.Schema({
     deletedFor: [{
         type: mongoose.Schema.Types.ObjectId,
         ref: 'User'
-    }]
+    }],
+    isTemporary: {
+        type: Boolean,
+        default: false
+    },
+    expiresAt: {
+        type: Date,
+        default: null
+    }
 },
 {
     timestamps: true

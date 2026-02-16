@@ -8,6 +8,7 @@ const authRoute = require('./routes/auth.route.js');
 const chatRoute = require('./routes/chat.route.js');
 const statusRoute = require('./routes/status.route.js');
 const initializeSocket = require('./services/socketService');
+const { initializeCleanupService } = require('./services/messageCleanupService');
 const http = require('http');
 
 const app = express();
@@ -34,6 +35,9 @@ connectDB();
 // create server
 const server = http.createServer(app);
 const io = initializeSocket(server);
+
+// Initialize message cleanup service
+initializeCleanupService(io, io.socketUserMap);
 
 // socket middleware
 app.use((req,res,next)=>{

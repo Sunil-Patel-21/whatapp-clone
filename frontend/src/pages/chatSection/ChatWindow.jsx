@@ -4,16 +4,17 @@ import useUserStore from "../../store/useUserStore";
 import { useChatStore } from "../../store/chatStore";
 import {isToday,isYesterday,format} from "date-fns";
 import EmojiPicker from "emoji-picker-react";
-import { FaArrowLeft, FaEllipsisH, FaEllipsisV, FaFile, FaImage, FaLock, FaPaperclip, FaPaperPlane, FaSmile, FaTimes, FaVideo, FaSearch, FaBan, FaTrash, FaVolumeMute, FaUserCircle } from "react-icons/fa";
+import { FaArrowLeft, FaEllipsisH, FaEllipsisV, FaFile, FaImage, FaLock, FaPaperclip, FaPaperPlane, FaSmile, FaTimes, FaVideo, FaSearch, FaBan, FaTrash, FaVolumeMute, FaUserCircle, FaShieldAlt } from "react-icons/fa";
 import whatsappImage from "../../images/whatsapp_image.png";
 import { object } from "yup";
 import MessageBubble from "./MessageBubble";
 import ContactInfo from "./ContactInfo";
 import { toast } from "react-toastify";
 import VideoCallManager from "../videoCall/VideoCallManager";
-import { getSocket, clearChat } from "../../services/chat.service";
+import { getSocket, clearChat, toggleTemporaryMode } from "../../services/chat.service";
 import useVideoCallStore from "../../store/videoCallStore";
 import useOutsideclick from "../../hooks/useOutSideClick";
+import TemporaryModeModal from "../../components/TemporaryModeModal";
 const isValidate = (date) => {
   return date instanceof Date && !isNaN(date);
 };
@@ -28,6 +29,7 @@ function ChatWindow({selectedContact, setSelectedContact}) {
   const [searchQuery, setSearchQuery] = useState("");
   const [filePreview, setFilePreview] = useState(null);
   const [selectedFile, setSelectedFile] = useState(null);
+  const [showTemporaryModal, setShowTemporaryModal] = useState(false);
 
   const typingTimeOutRef = useRef(null);
   const messagesEndRef = useRef(null);
@@ -56,7 +58,9 @@ function ChatWindow({selectedContact, setSelectedContact}) {
     isUserOnline,
     cleanup,
     deleteMessage,
-    addReactions
+    addReactions,
+    getCurrentConversation,
+    updateConversationTemporaryMode
     
   } = useChatStore();
 
@@ -66,6 +70,8 @@ function ChatWindow({selectedContact, setSelectedContact}) {
   const onlineStatus = isUserOnline(selectedContact?._id);
   const lastSeen = getUserLastSeen(selectedContact?._id);
   const isTyping = isUserTyping(selectedContact?._id);
+  const currentConv = getCurrentConversation();
+  const isTemporaryMode = currentConv?.isTemporaryMode || false;
 
   console.log("LastSeen : ", lastSeen);
   
@@ -235,6 +241,23 @@ const groupedMessages = Array.isArray(messages)
     }
   };
 
+  const handleToggleTemporaryMode = async (duration) => {
+    try {
+      const conversation = conversations.find(conv =>
+        conv.participants.some(p => p._id === selectedContact._id)
+      );
+      if (conversation?._id) {
+        const newMode = !isTemporaryMode;
+        await toggleTemporaryMode(conversation._id, newMode, newMode ? duration : null);
+        updateConversationTemporaryMode(conversation._id, newMode, newMode ? duration : null);
+        toast.success(newMode ? '🛡️ Temporary mode enabled' : 'Temporary mode disabled');
+      }
+    } catch (error) {
+      toast.error('Failed to toggle temporary mode');
+    }
+    setShowTemporaryModal(false);
+  };
+
   const filteredMessages = searchQuery
     ? Object.entries(groupedMessages).reduce((acc, [date, msgs]) => {
         const filtered = msgs.filter(msg =>
@@ -332,6 +355,21 @@ const groupedMessages = Array.isArray(messages)
 
       {showChatMenu && (
         <div ref={chatMenuRef} className={`absolute top-10 right-0 w-56 rounded-lg shadow-lg py-2 z-50 ${theme === "dark" ? "bg-[#2a3942] text-white" : "bg-white text-gray-800"}`}>
+          <button
+            onClick={() => {
+              if (isTemporaryMode) {
+                handleToggleTemporaryMode(null);
+              } else {
+                setShowTemporaryModal(true);
+              }
+              setShowChatMenu(false);
+            }}
+            className={`flex items-center w-full px-4 py-3 gap-3 ${isTemporaryMode ? 'text-green-500' : ''} ${theme === "dark" ? "hover:bg-[#202c33]" : "hover:bg-gray-100"}`}
+          >
+            <FaShieldAlt className="h-4 w-4" />
+            <span>{isTemporaryMode ? '✓ Temporary Mode ON' : 'Temporary Mode'}</span>
+          </button>
+          <div className={`border-t ${theme === "dark" ? "border-gray-700" : "border-gray-200"} my-1`}></div>
           <button
             onClick={() => {
               setShowContactInfo(true);
@@ -522,6 +560,14 @@ const groupedMessages = Array.isArray(messages)
     </div>
 
   </div>
+  )}
+  {showTemporaryModal && (
+    <TemporaryModeModal
+      theme={theme}
+      onConfirm={handleToggleTemporaryMode}
+      onClose={() => setShowTemporaryModal(false)}
+      currentMode={isTemporaryMode}
+    />
   )}
   <VideoCallManager socket={socket}/> 
 

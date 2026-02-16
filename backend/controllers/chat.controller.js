@@ -54,6 +54,14 @@ exports.sendMessage = async (req, res) => {
             return response(res, 400, "message content is required");
         }
 
+        // Handle temporary mode
+        let isTemporary = false;
+        let expiresAt = null;
+        if (conversation.isTemporaryMode && conversation.temporaryDuration) {
+            isTemporary = true;
+            expiresAt = new Date(Date.now() + conversation.temporaryDuration);
+        }
+
         const message = new Message({
             conversation: conversation._id,
             sender: senderId,
@@ -61,7 +69,9 @@ exports.sendMessage = async (req, res) => {
             content: content || "",
             imageOrVideoUrl,
             contentType,
-            messageStatus
+            messageStatus,
+            isTemporary,
+            expiresAt
         });
         await message.save();
 
@@ -238,3 +248,47 @@ exports.clearChat = async (req,res)=>{
         return response(res,500,"Internal server error");
     }
 }
+
+// Toggle temporary mode
+exports.toggleTemporaryMode = async (req, res) => {
+    const { conversationId } = req.params;
+    const { isTemporaryMode, temporaryDuration } = req.body;
+    const userId = req.user.userId;
+
+    try {
+        const conversation = await Conversation.findById(conversationId);
+        if (!conversation) {
+            return response(res, 404, "conversation not found");
+        }
+        if (!conversation.participants.includes(userId)) {
+            return response(res, 403, "unauthorized user");
+        }
+
+        conversation.isTemporaryMode = isTemporaryMode;
+        conversation.temporaryDuration = temporaryDuration;
+        await conversation.save();
+
+        // Emit socket event to notify other participant
+        if (req.io && req.socketUserMap) {
+            const otherParticipant = conversation.participants.find(
+                p => p.toString() !== userId
+            );
+            const socketId = req.socketUserMap.get(otherParticipant.toString());
+            if (socketId) {
+                req.io.to(socketId).emit("temporary_mode_changed", {
+                    conversationId,
+                    isTemporaryMode,
+                    temporaryDuration
+                });
+            }
+        }
+
+        return response(res, 200, "temporary mode updated", {
+            isTemporaryMode: conversation.isTemporaryMode,
+            temporaryDuration: conversation.temporaryDuration
+        });
+    } catch (error) {
+        console.error(error);
+        return response(res, 500, "Internal server error");
+    }
+};

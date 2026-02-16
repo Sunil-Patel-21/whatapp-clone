@@ -1,6 +1,6 @@
 import React from "react";
 import {format} from "date-fns";
-import { FaCheck, FaCheckDouble, FaPlus, FaRegCopy, FaSmile } from "react-icons/fa";
+import { FaCheck, FaCheckDouble, FaPlus, FaRegCopy, FaSmile, FaShieldAlt } from "react-icons/fa";
 import { RxCross2} from "react-icons/rx";
 import {HiDotsVertical} from "react-icons/hi";
 import useOutsideclick from "../../hooks/useOutSideClick";
@@ -24,6 +24,7 @@ function MessageBubble({
 
     const isUserMessage = message.sender._id === currentUser?._id;
     const isTempMessage = typeof message._id === "string" && message._id.startsWith("temp-");
+    const isTemporaryMessage = message.isTemporary;
 
     const bubbleClass = isUserMessage ? "chat-end" : "chat-start";
     const bubbleContentClass = isUserMessage ? `chat-bubble md:max-w-[50%] min-w-[130px] ${theme === "dark" ?"bg-[#144d38] text-white" : "bg-[#d9fdd3] text-black"}` : `chat-bubble md:max-w-[50%] min-w-[130px] ${theme === "dark" ?"bg-[#144d38] text-white" : "bg-[#d9fdd3] text-black"}`;
@@ -56,6 +57,9 @@ function MessageBubble({
 
         <div className={`${bubbleContentClass} relative group `} ref={messageRef}>
             <div className="flex items-center gap-2">
+                {isTemporaryMessage && (
+                    <FaShieldAlt className="text-green-500 h-3 w-3 mr-1" title="Temporary message" />
+                )}
                 {message.contentType === "text" && <p className="mr-2">{message.content}</p>}
                 {message.contentType === "image" && 
                     (<div>
@@ -163,17 +167,25 @@ function MessageBubble({
 
             {showOptions && (
                 <div ref={optionsRef} className={`absolute top-8 right-1 z-50 rounded-lg shadow-lg py-2 text-sm ${theme === "dark" ? "bg-[#1d1f1f] text-white" : "bg-gray-100 text-black"}`}>
-                    <button 
-                        onClick={()=> {
-                            if(message.contentType === "text"){
-                                navigator.clipboard.writeText(message.content)
-                            }
-                            setShowOptions(false);
-                        }}
-                        className="flex items-center w-full px-4 py-2 gap-3 cursor-pointer rounded-lg"
-                    >
-                        <FaRegCopy size={14}/> <span>Copy</span>
-                    </button>
+                    {!isTemporaryMessage && (
+                        <button 
+                            onClick={()=> {
+                                if(message.contentType === "text"){
+                                    navigator.clipboard.writeText(message.content)
+                                }
+                                setShowOptions(false);
+                            }}
+                            className="flex items-center w-full px-4 py-2 gap-3 cursor-pointer rounded-lg"
+                        >
+                            <FaRegCopy size={14}/> <span>Copy</span>
+                        </button>
+                    )}
+
+                    {isTemporaryMessage && (
+                        <div className="px-4 py-2 text-xs text-gray-500">
+                            Copy disabled for temporary messages
+                        </div>
+                    )}
 
                     {isUserMessage && (
                         <button 
