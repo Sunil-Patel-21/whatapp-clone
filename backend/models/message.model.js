@@ -51,7 +51,31 @@ const messageSchema = new mongoose.Schema({
     expiresAt: {
         type: Date,
         default: null
-    }
+    },
+    isOneTimeMedia: {
+        type: Boolean,
+        default: false
+    },
+    viewLimit: {
+        type: Number,
+        default: null
+    },
+    viewsLeft: {
+        type: Number,
+        default: null
+    },
+    mediaExpiresAt: {
+        type: Date,
+        default: null
+    },
+    viewedBy: [{
+        user: {
+            type: mongoose.Schema.Types.ObjectId,
+            ref: 'User'
+        },
+        viewedAt: Date,
+        viewCount: Number
+    }]
 },
 {
     timestamps: true

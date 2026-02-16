@@ -5,7 +5,7 @@ const response = require("../utils/responseHandler");
 
 exports.sendMessage = async (req, res) => {
     try {
-        const { senderId, receiverId, messageStatus, content } = req.body;
+        const { senderId, receiverId, messageStatus, content, isOneTimeMedia, viewLimit, mediaExpiryDuration } = req.body;
         const file = req.file;
         
         // Validate required fields
@@ -62,6 +62,17 @@ exports.sendMessage = async (req, res) => {
             expiresAt = new Date(Date.now() + conversation.temporaryDuration);
         }
 
+        // Handle one-time media
+        let oneTimeConfig = {};
+        if (isOneTimeMedia === 'true' && (contentType === 'image' || contentType === 'video')) {
+            oneTimeConfig = {
+                isOneTimeMedia: true,
+                viewLimit: parseInt(viewLimit) || 1,
+                viewsLeft: parseInt(viewLimit) || 1,
+                mediaExpiresAt: mediaExpiryDuration ? new Date(Date.now() + parseInt(mediaExpiryDuration)) : null
+            };
+        }
+
         const message = new Message({
             conversation: conversation._id,
             sender: senderId,
@@ -71,7 +82,8 @@ exports.sendMessage = async (req, res) => {
             contentType,
             messageStatus,
             isTemporary,
-            expiresAt
+            expiresAt,
+            ...oneTimeConfig
         });
         await message.save();
 
@@ -286,6 +298,73 @@ exports.toggleTemporaryMode = async (req, res) => {
         return response(res, 200, "temporary mode updated", {
             isTemporaryMode: conversation.isTemporaryMode,
             temporaryDuration: conversation.temporaryDuration
+        });
+    } catch (error) {
+        console.error(error);
+        return response(res, 500, "Internal server error");
+    }
+};
+
+// View one-time media
+exports.viewOneTimeMedia = async (req, res) => {
+    const { messageId } = req.params;
+    const userId = req.user.userId;
+
+    try {
+        const message = await Message.findById(messageId);
+        if (!message) {
+            return response(res, 404, "message not found");
+        }
+
+        // Check if user is participant
+        if (message.sender.toString() !== userId && message.receiver.toString() !== userId) {
+            return response(res, 403, "unauthorized");
+        }
+
+        // Check if media is expired
+        if (message.mediaExpiresAt && new Date() > message.mediaExpiresAt) {
+            return response(res, 410, "media expired");
+        }
+
+        // Check if views exhausted
+        if (message.viewsLeft <= 0) {
+            return response(res, 410, "no views remaining");
+        }
+
+        // Decrement view count
+        message.viewsLeft -= 1;
+        
+        // Track view
+        const existingView = message.viewedBy.find(v => v.user.toString() === userId);
+        if (existingView) {
+            existingView.viewCount += 1;
+            existingView.viewedAt = new Date();
+        } else {
+            message.viewedBy.push({
+                user: userId,
+                viewedAt: new Date(),
+                viewCount: 1
+            });
+        }
+
+        await message.save();
+
+        // Emit socket event if views exhausted
+        if (message.viewsLeft === 0 && req.io && req.socketUserMap) {
+            const senderSocketId = req.socketUserMap.get(message.sender.toString());
+            const receiverSocketId = req.socketUserMap.get(message.receiver.toString());
+            
+            if (senderSocketId) {
+                req.io.to(senderSocketId).emit("media_expired", messageId);
+            }
+            if (receiverSocketId) {
+                req.io.to(receiverSocketId).emit("media_expired", messageId);
+            }
+        }
+
+        return response(res, 200, "view recorded", {
+            viewsLeft: message.viewsLeft,
+            mediaUrl: message.imageOrVideoUrl
         });
     } catch (error) {
         console.error(error);

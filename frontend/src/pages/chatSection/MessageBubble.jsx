@@ -1,10 +1,11 @@
 import React from "react";
 import {format} from "date-fns";
-import { FaCheck, FaCheckDouble, FaPlus, FaRegCopy, FaSmile, FaShieldAlt } from "react-icons/fa";
+import { FaCheck, FaCheckDouble, FaPlus, FaRegCopy, FaSmile, FaShieldAlt, FaLock, FaClock } from "react-icons/fa";
 import { RxCross2} from "react-icons/rx";
 import {HiDotsVertical} from "react-icons/hi";
 import useOutsideclick from "../../hooks/useOutSideClick";
 import EmojiPicker from "emoji-picker-react";
+import OneTimeMediaViewer from "../../components/OneTimeMediaViewer";
 
 function MessageBubble({
     message,
@@ -16,6 +17,8 @@ function MessageBubble({
     const [showEmojiPicker, setShowEmojiPicker] = React.useState(false);
     const [showReactions, setShowReactions] = React.useState(false);
     const [showOptions, setShowOptions] = React.useState(false);
+    const [showOneTimeViewer, setShowOneTimeViewer] = React.useState(false);
+    const [localViewsLeft, setLocalViewsLeft] = React.useState(message.viewsLeft);
     const optionsRef = React.useRef(null);
     const messageRef = React.useRef(null);
 
@@ -25,6 +28,8 @@ function MessageBubble({
     const isUserMessage = message.sender._id === currentUser?._id;
     const isTempMessage = typeof message._id === "string" && message._id.startsWith("temp-");
     const isTemporaryMessage = message.isTemporary;
+    const isOneTimeMedia = message.isOneTimeMedia;
+    const isMediaExpired = isOneTimeMedia && (localViewsLeft <= 0 || (message.mediaExpiresAt && new Date() > new Date(message.mediaExpiresAt)));
 
     const bubbleClass = isUserMessage ? "chat-end" : "chat-start";
     const bubbleContentClass = isUserMessage ? `chat-bubble md:max-w-[50%] min-w-[130px] ${theme === "dark" ?"bg-[#144d38] text-white" : "bg-[#d9fdd3] text-black"}` : `chat-bubble md:max-w-[50%] min-w-[130px] ${theme === "dark" ?"bg-[#144d38] text-white" : "bg-[#d9fdd3] text-black"}`;
@@ -60,20 +65,44 @@ function MessageBubble({
                 {isTemporaryMessage && (
                     <FaShieldAlt className="text-green-500 h-3 w-3 mr-1" title="Temporary message" />
                 )}
+                {isOneTimeMedia && (
+                    <FaLock className="text-blue-500 h-3 w-3 mr-1" title="One-time media" />
+                )}
                 {message.contentType === "text" && <p className="mr-2">{message.content}</p>}
-                {message.contentType === "image" && 
+                {message.contentType === "image" && !isOneTimeMedia && 
                     (<div>
                         <img src={message.imageOrVideoUrl} alt="image/video" className="rounded-lg max-w-xs" />
                         <p className="mt-1">{message.content}</p>
                     </div>)
                 }
 
-                {message.contentType === "video" && 
+                {message.contentType === "video" && !isOneTimeMedia && 
                     (<div>
                         <video src={message.imageOrVideoUrl} alt="image/video" className="rounded-lg max-w-xs" controls/>
                         <p className="mt-1">{message.content}</p>
                     </div>)
                 }
+
+                {isOneTimeMedia && !isMediaExpired && (
+                    <div 
+                        onClick={() => setShowOneTimeViewer(true)}
+                        className="relative cursor-pointer rounded-lg overflow-hidden max-w-xs"
+                        style={{ filter: 'blur(20px)', width: '200px', height: '200px', background: '#333' }}
+                    >
+                        <div className="absolute inset-0 flex flex-col items-center justify-center bg-black bg-opacity-60">
+                            <FaLock className="text-white h-8 w-8 mb-2" />
+                            <p className="text-white text-sm">One-Time Media</p>
+                            <p className="text-gray-300 text-xs mt-1">{localViewsLeft} view{localViewsLeft !== 1 ? 's' : ''} left</p>
+                        </div>
+                    </div>
+                )}
+
+                {isOneTimeMedia && isMediaExpired && (
+                    <div className="rounded-lg p-4 bg-gray-700 text-gray-400 max-w-xs">
+                        <FaClock className="h-6 w-6 mx-auto mb-2" />
+                        <p className="text-sm text-center">This media has expired</p>
+                    </div>
+                )}
 
             </div>
 
@@ -203,6 +232,17 @@ function MessageBubble({
             )}
 
         </div>
+
+        {showOneTimeViewer && (
+            <OneTimeMediaViewer
+                message={message}
+                theme={theme}
+                onClose={() => setShowOneTimeViewer(false)}
+                onViewRecorded={(msgId, viewsLeft) => {
+                    setLocalViewsLeft(viewsLeft);
+                }}
+            />
+        )}
 
     </div>;
 }

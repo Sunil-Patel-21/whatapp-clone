@@ -27,29 +27,41 @@ const cleanupExpiredMessages = async () => {
             expiresAt: { $lte: new Date() }
         }).select('_id conversation sender receiver');
 
-        if (expiredMessages.length === 0) return;
+        // Find expired one-time media
+        const expiredMedia = await Message.find({
+            isOneTimeMedia: true,
+            $or: [
+                { viewsLeft: { $lte: 0 } },
+                { mediaExpiresAt: { $lte: new Date() } }
+            ]
+        }).select('_id conversation sender receiver');
 
-        const messageIds = expiredMessages.map(m => m._id);
+        const allExpired = [...expiredMessages, ...expiredMedia];
+        if (allExpired.length === 0) return;
+
+        const messageIds = allExpired.map(m => m._id);
         
         // Delete expired messages
         await Message.deleteMany({ _id: { $in: messageIds } });
 
         // Notify connected users via socket
         if (io && socketUserMap) {
-            expiredMessages.forEach(msg => {
+            allExpired.forEach(msg => {
                 const senderSocketId = socketUserMap.get(msg.sender.toString());
                 const receiverSocketId = socketUserMap.get(msg.receiver.toString());
 
+                const eventName = expiredMedia.some(m => m._id.equals(msg._id)) ? 'media_expired' : 'message_expired';
+
                 if (senderSocketId) {
-                    io.to(senderSocketId).emit('message_expired', msg._id);
+                    io.to(senderSocketId).emit(eventName, msg._id);
                 }
                 if (receiverSocketId) {
-                    io.to(receiverSocketId).emit('message_expired', msg._id);
+                    io.to(receiverSocketId).emit(eventName, msg._id);
                 }
             });
         }
 
-        console.log(`🗑️ Cleaned up ${expiredMessages.length} expired messages`);
+        console.log(`🗑️ Cleaned up ${allExpired.length} expired messages/media`);
     } catch (error) {
         console.error('Cleanup error:', error);
     }

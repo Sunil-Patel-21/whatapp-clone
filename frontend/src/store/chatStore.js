@@ -120,6 +120,17 @@
                 }));
             });
 
+            // handle expired media
+            socket.on("media_expired", (messageId) => {
+                set((state) => ({
+                    messages: state.messages.map(msg => 
+                        msg._id === messageId 
+                            ? { ...msg, viewsLeft: 0 }
+                            : msg
+                    )
+                }));
+            });
+
             // emit status check for all users in conversation list
             const {conversations} = get();
             if(conversations?.length > 0){

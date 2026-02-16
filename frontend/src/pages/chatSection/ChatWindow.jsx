@@ -15,6 +15,7 @@ import { getSocket, clearChat, toggleTemporaryMode } from "../../services/chat.s
 import useVideoCallStore from "../../store/videoCallStore";
 import useOutsideclick from "../../hooks/useOutSideClick";
 import TemporaryModeModal from "../../components/TemporaryModeModal";
+import OneTimeMediaModal from "../../components/OneTimeMediaModal";
 const isValidate = (date) => {
   return date instanceof Date && !isNaN(date);
 };
@@ -30,6 +31,8 @@ function ChatWindow({selectedContact, setSelectedContact}) {
   const [filePreview, setFilePreview] = useState(null);
   const [selectedFile, setSelectedFile] = useState(null);
   const [showTemporaryModal, setShowTemporaryModal] = useState(false);
+  const [showOneTimeModal, setShowOneTimeModal] = useState(false);
+  const [oneTimeConfig, setOneTimeConfig] = useState(null);
 
   const typingTimeOutRef = useRef(null);
   const messagesEndRef = useRef(null);
@@ -134,6 +137,10 @@ useEffect(() => {
       setShowFileMenu(false);
       if(file.type.startsWith("image/") || file.type.startsWith("video/")) {
         setFilePreview(URL.createObjectURL(file));
+        // Show one-time media option for images/videos
+        if (window.confirm('Enable One-Time View Plus for this media?')) {
+          setShowOneTimeModal(true);
+        }
       }
     }
   };
@@ -153,6 +160,13 @@ const handleSendMessage = async () => {
 
   if (selectedFile) {
     formData.append("media", selectedFile);
+    
+    // Add one-time media config if enabled
+    if (oneTimeConfig) {
+      formData.append("isOneTimeMedia", "true");
+      formData.append("viewLimit", oneTimeConfig.viewLimit);
+      formData.append("mediaExpiryDuration", oneTimeConfig.mediaExpiryDuration);
+    }
   }
 
   try {
@@ -161,6 +175,7 @@ const handleSendMessage = async () => {
     setMessage("");
     setSelectedFile(null);
     setFilePreview(null);
+    setOneTimeConfig(null);
     if (fileInputRef.current) {
       fileInputRef.current.value = "";
     }
@@ -567,6 +582,17 @@ const groupedMessages = Array.isArray(messages)
       onConfirm={handleToggleTemporaryMode}
       onClose={() => setShowTemporaryModal(false)}
       currentMode={isTemporaryMode}
+    />
+  )}
+  {showOneTimeModal && (
+    <OneTimeMediaModal
+      theme={theme}
+      onConfirm={(config) => {
+        setOneTimeConfig(config);
+        setShowOneTimeModal(false);
+        toast.success('🕒 One-Time View Plus enabled');
+      }}
+      onClose={() => setShowOneTimeModal(false)}
     />
   )}
   <VideoCallManager socket={socket}/> 
