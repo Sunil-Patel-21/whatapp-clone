@@ -9,6 +9,7 @@ import {
   FaTimes,
   FaVideo,
   FaVideoSlash,
+  FaExclamationCircle,
 } from "react-icons/fa";
 
 function VideoCallModal({ socket }) {
@@ -28,6 +29,7 @@ function VideoCallModal({ socket }) {
     iceCandidatesQueue,
     isCallModalOpen,
     callStatus,
+    failureReason,
     setIncomingCall,
     setCurrentCall,
     setCallType,
@@ -99,6 +101,19 @@ function VideoCallModal({ socket }) {
       remoteVideoRef.current.srcObject = remoteStream;
     }
   }, [remoteStream]);
+
+  // Cleanup media on call failure
+  useEffect(() => {
+    if (callStatus === "failed" || callStatus === "rejected" || callStatus === "ended") {
+      if (localStream) {
+        localStream.getTracks().forEach((track) => {
+          track.stop();
+          console.log(`Stopped ${track.kind} track`);
+        });
+        setLocalStream(null);
+      }
+    }
+  }, [callStatus, localStream, setLocalStream]);
 
   // initialize media stream
   const initialiZeMedia = async (isVideo = true) => {
@@ -416,13 +431,152 @@ function VideoCallModal({ socket }) {
   const shouldShowActiveCall =
     isCallActive || callStatus === "calling" || callStatus === "connecting";
 
+  const shouldShowFailureUI = 
+    callStatus === "failed" || callStatus === "rejected" || callStatus === "ended";
+
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-75">
       <div
         className={`relative w-full h-full max-w-4xl max-h-3xl rounded-lg overflow-hidden ${theme === "dark" ? "bg-gray-900 " : "bg-white"}`}
       >
+        {/* Call Failed UI - Production Grade */}
+        {callStatus === "failed" && (
+          <div className="flex items-center flex-col justify-center h-full p-8 animate-fadeIn">
+            <div className="text-center max-w-sm">
+              {/* Failed Call Icon with Pulse Animation */}
+              <div className="relative w-28 h-28 mx-auto mb-8">
+                <div className="absolute inset-0 rounded-full bg-red-500 opacity-10 animate-ping"></div>
+                <div className="relative w-28 h-28 rounded-full bg-gradient-to-br from-red-500/20 to-red-600/20 backdrop-blur-sm flex items-center justify-center border border-red-500/30">
+                  <div className="w-16 h-16 rounded-full bg-red-500/20 flex items-center justify-center">
+                    <FaPhoneSlash className="w-8 h-8 text-red-500" />
+                  </div>
+                </div>
+              </div>
+
+              {/* User Avatar with Border */}
+              <div className="relative w-24 h-24 mx-auto mb-6">
+                <div className="w-24 h-24 rounded-full overflow-hidden border-4 border-gray-700/50 shadow-xl">
+                  <img
+                    src={displayInfo?.avatar}
+                    alt={displayInfo?.name}
+                    className="w-full h-full object-cover"
+                    onError={(e) => {
+                      e.target.src = "/placeholder.svg";
+                    }}
+                  />
+                </div>
+              </div>
+
+              {/* Text Hierarchy */}
+              <h2
+                className={`text-2xl font-semibold mb-3 tracking-tight ${theme === "dark" ? "text-white" : "text-gray-900"}`}
+              >
+                Call Unavailable
+              </h2>
+
+              <p
+                className={`text-base font-medium mb-2 ${theme === "dark" ? "text-gray-300" : "text-gray-700"}`}
+              >
+                {displayInfo?.name} is offline
+              </p>
+
+              <p
+                className={`text-sm leading-relaxed ${theme === "dark" ? "text-gray-400" : "text-gray-500"}`}
+              >
+                {failureReason || "Unable to connect. Try again when they're online."}
+              </p>
+            </div>
+
+            {/* Action Button */}
+            <button
+              onClick={handleEndCall}
+              className={`mt-8 px-8 py-3.5 rounded-full font-medium transition-all duration-200 transform hover:scale-105 active:scale-95 shadow-lg ${
+                theme === "dark"
+                  ? "bg-gray-700 hover:bg-gray-600 text-white"
+                  : "bg-gray-200 hover:bg-gray-300 text-gray-900"
+              }`}
+            >
+              Back to Chat
+            </button>
+
+            {/* Auto-close indicator */}
+            <p className={`mt-4 text-xs ${theme === "dark" ? "text-gray-500" : "text-gray-400"}`}>
+              Closing automatically...
+            </p>
+          </div>
+        )}
+
+        {/* Call Rejected UI - Production Grade */}
+        {callStatus === "rejected" && (
+          <div className="flex items-center flex-col justify-center h-full p-8 animate-fadeIn">
+            <div className="text-center max-w-sm">
+              {/* Rejected Icon */}
+              <div className="relative w-28 h-28 mx-auto mb-8">
+                <div className="w-28 h-28 rounded-full bg-gradient-to-br from-orange-500/20 to-red-500/20 backdrop-blur-sm flex items-center justify-center border border-orange-500/30">
+                  <div className="w-16 h-16 rounded-full bg-orange-500/20 flex items-center justify-center">
+                    <FaPhoneSlash className="w-8 h-8 text-orange-500" />
+                  </div>
+                </div>
+              </div>
+
+              {/* User Avatar */}
+              <div className="relative w-24 h-24 mx-auto mb-6">
+                <div className="w-24 h-24 rounded-full overflow-hidden border-4 border-gray-700/50 shadow-xl">
+                  <img
+                    src={displayInfo?.avatar}
+                    alt={displayInfo?.name}
+                    className="w-full h-full object-cover"
+                    onError={(e) => {
+                      e.target.src = "/placeholder.svg";
+                    }}
+                  />
+                </div>
+              </div>
+
+              <h2
+                className={`text-2xl font-semibold mb-3 tracking-tight ${theme === "dark" ? "text-white" : "text-gray-900"}`}
+              >
+                Call Declined
+              </h2>
+
+              <p
+                className={`text-base ${theme === "dark" ? "text-gray-300" : "text-gray-700"}`}
+              >
+                {displayInfo?.name} is busy right now
+              </p>
+            </div>
+          </div>
+        )}
+
+        {/* Call Ended UI - Production Grade */}
+        {callStatus === "ended" && (
+          <div className="flex items-center flex-col justify-center h-full p-8 animate-fadeIn">
+            <div className="text-center max-w-sm">
+              {/* User Avatar */}
+              <div className="relative w-24 h-24 mx-auto mb-6">
+                <div className="w-24 h-24 rounded-full overflow-hidden border-4 border-gray-700/50 shadow-xl">
+                  <img
+                    src={displayInfo?.avatar}
+                    alt={displayInfo?.name}
+                    className="w-full h-full object-cover"
+                    onError={(e) => {
+                      e.target.src = "/placeholder.svg";
+                    }}
+                  />
+                </div>
+              </div>
+
+              <h2
+                className={`text-xl font-semibold ${theme === "dark" ? "text-white" : "text-gray-900"}`}
+              >
+                Call Ended
+              </h2>
+            </div>
+          </div>
+        )}
+
         {/* incoming call ui  */}
-        {incomingCall && !isCallActive && (
+        {incomingCall && !isCallActive && !shouldShowFailureUI && (
           <div className="flex items-center flex-col justify-center h-full p-8 ">
             <div className="text-center mb-8">
               <div className="w-32 h-32 rounded-full bg-gray-300 mx-auto mb-4 overflow-hidden">

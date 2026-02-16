@@ -10,6 +10,7 @@ function VideoCallManager({socket}) {
         setCallType,
         setCallModalOpen,
         setCallStatus,
+        setFailureReason,
         endCall
 
     } = useVideoCallStore();
@@ -39,9 +40,11 @@ function VideoCallManager({socket}) {
         const handleCallFailed = ({reason}) => {
             console.log("Call failed:", reason);
             setCallStatus("failed");
+            setFailureReason(reason || "User is currently unavailable");
+            setCallModalOpen(true);
             setTimeout(()=>{
                 endCall();
-            },2000);
+            },5000);
         }
 
         socket.on("incoming_call",handleIncomingCall);

@@ -21,6 +21,7 @@ const useVideoCallStore = create(
 
             isCallModalOpen: false,
             callStatus:"idle",
+            failureReason: null,
 
             // actions
             setCurrentCall: (call)=>{
@@ -57,6 +58,10 @@ const useVideoCallStore = create(
 
             setCallStatus: (callStatus)=>{
                 set({callStatus});
+            },
+
+            setFailureReason: (reason)=>{
+                set({failureReason: reason});
             },
 
             addIceCandidate: (iceCandidate)=>{
@@ -124,7 +129,8 @@ const useVideoCallStore = create(
                     peerConnection: null,
                     iceCandidatesQueue: [],
                     isCallModalOpen: false,
-                    callStatus:"idle"
+                    callStatus:"idle",
+                    failureReason: null
                 });
             },
 
