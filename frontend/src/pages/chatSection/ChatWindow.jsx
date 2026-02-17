@@ -4,7 +4,7 @@ import useUserStore from "../../store/useUserStore";
 import { useChatStore } from "../../store/chatStore";
 import {isToday,isYesterday,format} from "date-fns";
 import EmojiPicker from "emoji-picker-react";
-import { FaArrowLeft, FaEllipsisH, FaEllipsisV, FaFile, FaImage, FaLock, FaPaperclip, FaPaperPlane, FaSmile, FaTimes, FaVideo, FaSearch, FaBan, FaTrash, FaVolumeMute, FaUserCircle, FaShieldAlt } from "react-icons/fa";
+import { FaArrowLeft, FaEllipsisH, FaEllipsisV, FaFile, FaImage, FaLock, FaPaperclip, FaPaperPlane, FaSmile, FaTimes, FaVideo, FaSearch, FaBan, FaTrash, FaVolumeMute, FaUserCircle, FaShieldAlt, FaClock } from "react-icons/fa";
 import whatsappImage from "../../images/whatsapp_image.png";
 import { object } from "yup";
 import MessageBubble from "./MessageBubble";
@@ -16,6 +16,8 @@ import useVideoCallStore from "../../store/videoCallStore";
 import useOutsideclick from "../../hooks/useOutSideClick";
 import TemporaryModeModal from "../../components/TemporaryModeModal";
 import OneTimeMediaModal from "../../components/OneTimeMediaModal";
+import ScheduleMessageModal from "../../components/ScheduleMessageModal";
+import ScheduledMessagesList from "../../components/ScheduledMessagesList";
 const isValidate = (date) => {
   return date instanceof Date && !isNaN(date);
 };
@@ -33,6 +35,8 @@ function ChatWindow({selectedContact, setSelectedContact}) {
   const [showTemporaryModal, setShowTemporaryModal] = useState(false);
   const [showOneTimeModal, setShowOneTimeModal] = useState(false);
   const [oneTimeConfig, setOneTimeConfig] = useState(null);
+  const [showScheduleModal, setShowScheduleModal] = useState(false);
+  const [showScheduledList, setShowScheduledList] = useState(false);
 
   const typingTimeOutRef = useRef(null);
   const messagesEndRef = useRef(null);
@@ -63,7 +67,8 @@ function ChatWindow({selectedContact, setSelectedContact}) {
     deleteMessage,
     addReactions,
     getCurrentConversation,
-    updateConversationTemporaryMode
+    updateConversationTemporaryMode,
+    createScheduledMessage
     
   } = useChatStore();
 
@@ -145,7 +150,7 @@ useEffect(() => {
     }
   };
 
-const handleSendMessage = async () => {
+const handleSendMessage = async (scheduledTime = null) => {
   if (!selectedContact) return;
   if (!message.trim() && !selectedFile) return;
 
@@ -170,7 +175,13 @@ const handleSendMessage = async () => {
   }
 
   try {
-    await sendMessage(formData);
+    if (scheduledTime) {
+      formData.append("scheduledTime", scheduledTime);
+      await createScheduledMessage(formData);
+      toast.success('⏰ Message scheduled successfully');
+    } else {
+      await sendMessage(formData);
+    }
     
     setMessage("");
     setSelectedFile(null);
@@ -181,7 +192,7 @@ const handleSendMessage = async () => {
     }
   } catch (error) {
     console.error("Error sending message:", error);
-    toast.error("Failed to send message");
+    toast.error(scheduledTime ? "Failed to schedule message" : "Failed to send message");
   }
 };
 
@@ -372,6 +383,17 @@ const groupedMessages = Array.isArray(messages)
         <div ref={chatMenuRef} className={`absolute top-10 right-0 w-56 rounded-lg shadow-lg py-2 z-50 ${theme === "dark" ? "bg-[#2a3942] text-white" : "bg-white text-gray-800"}`}>
           <button
             onClick={() => {
+              setShowScheduledList(true);
+              setShowChatMenu(false);
+            }}
+            className={`flex items-center w-full px-4 py-3 gap-3 ${theme === "dark" ? "hover:bg-[#202c33]" : "hover:bg-gray-100"}`}
+          >
+            <FaClock className="h-4 w-4" />
+            <span>Scheduled Messages</span>
+          </button>
+          <div className={`border-t ${theme === "dark" ? "border-gray-700" : "border-gray-200"} my-1`}></div>
+          <button
+            onClick={() => {
               if (isTemporaryMode) {
                 handleToggleTemporaryMode(null);
               } else {
@@ -511,6 +533,14 @@ const groupedMessages = Array.isArray(messages)
         <FaSmile className={`h-6 w-6 ${theme === "dark"?"text-gray-400" : "text-gray-500"}`}/>
       </button>
 
+      <button 
+        onClick={() => setShowScheduleModal(true)}
+        className="focus:outline-none"
+        title="Schedule message"
+      >
+        <FaClock className={`h-6 w-6 ${theme === "dark"?"text-gray-400" : "text-gray-500"}`}/>
+      </button>
+
       {showEmojiPicker && (
         <div ref={emojiPickerRef} className="absolute  left-0 bottom-16 z-50">
           <EmojiPicker 
@@ -593,6 +623,20 @@ const groupedMessages = Array.isArray(messages)
         toast.success('🕒 One-Time View Plus enabled');
       }}
       onClose={() => setShowOneTimeModal(false)}
+    />
+  )}
+  {showScheduleModal && (
+    <ScheduleMessageModal
+      isOpen={showScheduleModal}
+      onClose={() => setShowScheduleModal(false)}
+      onSchedule={(scheduledTime) => handleSendMessage(scheduledTime)}
+      initialContent={message}
+    />
+  )}
+  {showScheduledList && (
+    <ScheduledMessagesList
+      conversationId={currentConversation}
+      onClose={() => setShowScheduledList(false)}
     />
   )}
   <VideoCallManager socket={socket}/> 

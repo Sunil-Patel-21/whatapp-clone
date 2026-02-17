@@ -6,6 +6,7 @@
         conversations: [], // an array of conversation objects
         currentConversation: null,
         messages: [],
+        scheduledMessages: [],
         loading: false,
         error: null,
         onlineUsers: new Map(),
@@ -126,6 +127,44 @@
                     messages: state.messages.map(msg => 
                         msg._id === messageId 
                             ? { ...msg, viewsLeft: 0 }
+                            : msg
+                    )
+                }));
+            });
+
+            // handle scheduled message events
+            socket.on("scheduled_message_created", (scheduledMsg) => {
+                set((state) => ({
+                    scheduledMessages: [...state.scheduledMessages, scheduledMsg]
+                }));
+            });
+
+            socket.on("scheduled_message_updated", (scheduledMsg) => {
+                set((state) => ({
+                    scheduledMessages: state.scheduledMessages.map(msg =>
+                        msg._id === scheduledMsg._id ? scheduledMsg : msg
+                    )
+                }));
+            });
+
+            socket.on("scheduled_message_cancelled", (messageId) => {
+                set((state) => ({
+                    scheduledMessages: state.scheduledMessages.filter(msg => msg._id !== messageId)
+                }));
+            });
+
+            socket.on("scheduled_message_sent", ({ scheduledMessageId, message }) => {
+                set((state) => ({
+                    scheduledMessages: state.scheduledMessages.filter(msg => msg._id !== scheduledMessageId),
+                    messages: [...state.messages, message]
+                }));
+            });
+
+            socket.on("scheduled_message_failed", ({ scheduledMessageId, reason }) => {
+                set((state) => ({
+                    scheduledMessages: state.scheduledMessages.map(msg =>
+                        msg._id === scheduledMessageId
+                            ? { ...msg, status: 'failed', failureReason: reason }
                             : msg
                     )
                 }));
@@ -428,11 +467,58 @@
             }));
         },
 
+        fetchScheduledMessages: async (conversationId) => {
+            try {
+                const { getScheduledMessages } = await import('../services/chat.service');
+                const res = await getScheduledMessages(conversationId);
+                set({ scheduledMessages: res.data || [] });
+                return res.data;
+            } catch (error) {
+                console.error('Error fetching scheduled messages:', error);
+                set({ error: error.message });
+                return [];
+            }
+        },
+
+        createScheduledMessage: async (formData) => {
+            try {
+                const { createScheduledMessage } = await import('../services/chat.service');
+                const res = await createScheduledMessage(formData);
+                return res.data;
+            } catch (error) {
+                console.error('Error creating scheduled message:', error);
+                throw error;
+            }
+        },
+
+        updateScheduledMessage: async (messageId, data) => {
+            try {
+                const { updateScheduledMessage } = await import('../services/chat.service');
+                const res = await updateScheduledMessage(messageId, data);
+                return res.data;
+            } catch (error) {
+                console.error('Error updating scheduled message:', error);
+                throw error;
+            }
+        },
+
+        cancelScheduledMessage: async (messageId) => {
+            try {
+                const { cancelScheduledMessage } = await import('../services/chat.service');
+                await cancelScheduledMessage(messageId);
+                return true;
+            } catch (error) {
+                console.error('Error cancelling scheduled message:', error);
+                throw error;
+            }
+        },
+
         cleanup: ()=>{
             set({
                 conversations: [],
                 currentConversation: null,
                 messages: [],
+                scheduledMessages: [],
                 onlineUsers: new Map(),
                 typingUsers: new Map(),
             })

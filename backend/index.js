@@ -7,8 +7,10 @@ const bodyParser = require('body-parser');
 const authRoute = require('./routes/auth.route.js');
 const chatRoute = require('./routes/chat.route.js');
 const statusRoute = require('./routes/status.route.js');
+const scheduledMessageRoute = require('./routes/scheduledMessage.route.js');
 const initializeSocket = require('./services/socketService');
 const { initializeCleanupService } = require('./services/messageCleanupService');
+const { initializeScheduledMessageService } = require('./services/scheduledMessageService');
 const http = require('http');
 
 const app = express();
@@ -39,6 +41,9 @@ const io = initializeSocket(server);
 // Initialize message cleanup service
 initializeCleanupService(io, io.socketUserMap);
 
+// Initialize scheduled message service
+initializeScheduledMessageService(io, io.socketUserMap);
+
 // socket middleware
 app.use((req,res,next)=>{
     req.io = io;
@@ -50,6 +55,7 @@ app.use((req,res,next)=>{
 app.use('/api/auth',authRoute);
 app.use("/api/chats",chatRoute)
 app.use("/api/status",statusRoute)
+app.use("/api/scheduled-messages",scheduledMessageRoute)
 
 
 server.listen(port,()=>{

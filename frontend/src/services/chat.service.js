@@ -73,3 +73,40 @@ export const toggleTemporaryMode = async (conversationId, isTemporaryMode, tempo
     }
 };
 
+export const createScheduledMessage = async (formData) => {
+    try {
+        const response = await axiosInstance.post('/scheduled-messages', formData);
+        return response.data;
+    } catch (error) {
+        throw error.response?.data || error.message;
+    }
+};
+
+export const updateScheduledMessage = async (messageId, data) => {
+    try {
+        const response = await axiosInstance.put(`/scheduled-messages/${messageId}`, data);
+        return response.data;
+    } catch (error) {
+        throw error.response?.data || error.message;
+    }
+};
+
+export const cancelScheduledMessage = async (messageId) => {
+    try {
+        const response = await axiosInstance.delete(`/scheduled-messages/${messageId}`);
+        return response.data;
+    } catch (error) {
+        throw error.response?.data || error.message;
+    }
+};
+
+export const getScheduledMessages = async (conversationId) => {
+    try {
+        const params = conversationId ? { conversationId } : {};
+        const response = await axiosInstance.get('/scheduled-messages', { params });
+        return response.data;
+    } catch (error) {
+        throw error.response?.data || error.message;
+    }
+};
+
