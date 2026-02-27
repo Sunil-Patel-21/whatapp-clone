@@ -27,7 +27,7 @@
             socket.off("message_error");
             socket.off("message_deleted");
             socket.off("reaction_updated");
-            socket.off("message_status_update");
+            socket.off("message_status_updated");
 
             // listen for incoming message
             socket.on("receive_message", (message) => {
@@ -43,9 +43,9 @@
             })
 
             // update message status
-            socket.on("message_status_update", (messageId,messageStatus) => {
+            socket.on("message_status_updated", ({messageId, messageStatus}) => {
                 set((state) => ({ 
-                    messages: state.messages.map((msg) => msg._id === messageId ? {...msg,messageStatus} : msg)
+                    messages: state.messages.map((msg) => msg._id === messageId ? {...msg, messageStatus} : msg)
                 }));
             })
 
