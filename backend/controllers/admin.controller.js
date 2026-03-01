@@ -175,11 +175,11 @@ exports.deleteUser = async (req, res) => {
 exports.getReports = async (req, res) => {
     const { status = 'pending', page = 1, limit = 20 } = req.query;
     try {
-        const query = status !== 'all' ? { status } : {};
+        const query = status && status !== 'all' && status !== '' ? { status } : {};
 
         const reports = await Report.find(query)
-            .populate('reportedBy', 'username email')
-            .populate('reportedUser', 'username email')
+            .populate('reportedBy', 'username email profilePicture')
+            .populate('reportedUser', 'username email profilePicture')
             .populate('resolvedBy', 'email')
             .limit(limit * 1)
             .skip((page - 1) * limit)

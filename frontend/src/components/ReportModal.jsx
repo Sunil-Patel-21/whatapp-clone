@@ -29,7 +29,7 @@ const ReportModal = ({ isOpen, onClose, reportType, reportedUserId, reportedMess
 
     setLoading(true);
     try {
-      await axiosInstance.post('/api/reports/create', {
+      await axiosInstance.post('/reports/create', {
         reportedUserId,
         reportedMessageId,
         reason,

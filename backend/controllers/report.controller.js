@@ -6,7 +6,12 @@ const Message = require("../models/message.model");
 exports.createReport = async (req, res) => {
   try {
     const { reportedUserId, reportedMessageId, reason, description } = req.body;
-    const reporterId = req.user._id;
+    
+    if (!req.user || !req.user.userId) {
+      return res.status(401).json({ message: "User not authenticated" });
+    }
+    
+    const reporterId = req.user.userId;
 
     if (!reportedUserId || !reason) {
       return res.status(400).json({ message: "Required fields missing" });
@@ -41,7 +46,7 @@ exports.createReport = async (req, res) => {
 // Get user's reports
 exports.getMyReports = async (req, res) => {
   try {
-    const reports = await Report.find({ reportedBy: req.user._id })
+    const reports = await Report.find({ reportedBy: req.user.userId })
       .populate("reportedUser", "fullName profilePicture")
       .populate("reportedMessage")
       .sort({ createdAt: -1 });

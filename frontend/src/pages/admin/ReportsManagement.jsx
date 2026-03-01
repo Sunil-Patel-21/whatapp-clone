@@ -19,14 +19,16 @@ const ReportsManagement = () => {
     try {
       setLoading(true);
       const response = await getReports(statusFilter === 'all' ? '' : statusFilter);
-      setReports(response.reports);
+      const reportsData = response.data?.reports || [];
+      setReports(reportsData);
       
-      const total = response.reports.length;
-      const pending = response.reports.filter(r => r.status === 'pending').length;
-      const resolved = response.reports.filter(r => r.status === 'resolved').length;
+      const total = reportsData.length;
+      const pending = reportsData.filter(r => r.status === 'pending').length;
+      const resolved = reportsData.filter(r => r.status === 'resolved').length;
       setStats({ total, pending, resolved });
     } catch (error) {
       toast.error('Failed to fetch reports');
+      setReports([]);
     } finally {
       setLoading(false);
     }
@@ -42,11 +44,11 @@ const ReportsManagement = () => {
     }
   };
 
-  const filteredReports = reports.filter(report => {
+  const filteredReports = (reports || []).filter(report => {
     const searchLower = searchTerm.toLowerCase();
     return (
-      report.reportedUser?.fullName?.toLowerCase().includes(searchLower) ||
-      report.reportedBy?.fullName?.toLowerCase().includes(searchLower) ||
+      report.reportedUser?.username?.toLowerCase().includes(searchLower) ||
+      report.reportedBy?.username?.toLowerCase().includes(searchLower) ||
       report.reason?.toLowerCase().includes(searchLower)
     );
   });
@@ -137,7 +139,7 @@ const ReportsManagement = () => {
                           alt=""
                           className="w-8 h-8 rounded-full mr-3"
                         />
-                        <span className="text-sm text-black">{report.reportedBy?.fullName || 'Unknown'}</span>
+                        <span className="text-sm text-black">{report.reportedBy?.username || 'Unknown'}</span>
                       </div>
                     </td>
                     <td className="px-6 py-4">
@@ -147,7 +149,7 @@ const ReportsManagement = () => {
                           alt=""
                           className="w-8 h-8 rounded-full mr-3"
                         />
-                        <span className="text-sm text-black">{report.reportedUser?.fullName || 'Unknown'}</span>
+                        <span className="text-sm text-black">{report.reportedUser?.username || 'Unknown'}</span>
                       </div>
                     </td>
                     <td className="px-6 py-4">
