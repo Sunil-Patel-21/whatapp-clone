@@ -179,6 +179,7 @@ const handleSendMessage = async (scheduledTime = null) => {
       await sendMessage(formData);
     }
     
+    // Clear all states
     setMessage("");
     setSelectedFile(null);
     setFilePreview(null);
@@ -189,6 +190,14 @@ const handleSendMessage = async (scheduledTime = null) => {
   } catch (error) {
     console.error("Error sending message:", error);
     toast.error(scheduledTime ? "Failed to schedule message" : "Failed to send message");
+    // Clear on error too
+    setMessage("");
+    setSelectedFile(null);
+    setFilePreview(null);
+    setOneTimeConfig(null);
+    if (fileInputRef.current) {
+      fileInputRef.current.value = "";
+    }
   }
 };
 
