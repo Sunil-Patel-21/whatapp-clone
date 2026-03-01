@@ -142,10 +142,6 @@ useEffect(() => {
       setShowFileMenu(false);
       if(file.type.startsWith("image/") || file.type.startsWith("video/")) {
         setFilePreview(URL.createObjectURL(file));
-        // Show one-time media option for images/videos
-        if (window.confirm('Enable One-Time View Plus for this media?')) {
-          setShowOneTimeModal(true);
-        }
       }
     }
   };
@@ -506,7 +502,7 @@ const groupedMessages = Array.isArray(messages)
     </div>
 
     {filePreview && (
-      <div className="relative p-2">
+      <div className="relative p-2 border-t">
         {selectedFile?.type.startsWith("video/") ? (
           <video src={filePreview} controls className="w-80 object-cover rounded shadow-lg mx-auto" />
         ):(
@@ -517,11 +513,24 @@ const groupedMessages = Array.isArray(messages)
           onClick={()=>{
             setFilePreview(null);
             setSelectedFile(null);
+            setOneTimeConfig(null);
+            if (fileInputRef.current) {
+              fileInputRef.current.value = '';
+            }
           }}
-          className="absolute top-1 right-1 hover:bg-red-600 text-white rounded-full p-1"
+          className="absolute top-3 right-3 bg-red-500 hover:bg-red-600 text-white rounded-full p-2"
         >
           <FaTimes className={"h-4 w-4"} />
         </button>
+        
+        <div className="flex justify-center gap-2 mt-2">
+          <button
+            onClick={() => setShowOneTimeModal(true)}
+            className={`px-4 py-2 rounded-lg ${oneTimeConfig ? 'bg-blue-500 text-white' : 'bg-gray-200 text-gray-700'}`}
+          >
+            {oneTimeConfig ? '✓ One-Time View' : 'Enable One-Time View'}
+          </button>
+        </div>
       </div>
     )}
 
@@ -534,7 +543,13 @@ const groupedMessages = Array.isArray(messages)
       </button>
 
       <button 
-        onClick={() => setShowScheduleModal(true)}
+        onClick={() => {
+          if (!message.trim() && !selectedFile) {
+            toast.error('Please type a message or select a file first');
+            return;
+          }
+          setShowScheduleModal(true);
+        }}
         className="focus:outline-none"
         title="Schedule message"
       >
@@ -590,16 +605,17 @@ const groupedMessages = Array.isArray(messages)
         className={`flex-grow px-4 py-2 border rounded-full focus:outline-none focus:ring-2 focus:ring-green-500 ${theme === "dark" ? "bg-gray-700 text-white border-gray-600" : "bgwhite border-gray-300 text-black"}`}
         value={message}
         onChange={(e)=> setMessage(e.target.value)}
-        onKeyPress={(e) => {
-          if(e.key === "Enter"){
+        onKeyDown={(e) => {
+          if(e.key === "Enter" && !e.shiftKey){
+            e.preventDefault();
             handleSendMessage();
           }
         }}
         placeholder="Type your message"
       />
 
-      <button onClick={handleSendMessage} className="focus:outline-none">
-        <FaPaperPlane className={`h-6 w-6 text-green-500`} onClick={handleSendMessage}/>
+      <button onClick={() => handleSendMessage()} className="focus:outline-none">
+        <FaPaperPlane className={`h-6 w-6 text-green-500`}/>
       </button>
 
     </div>
@@ -622,14 +638,21 @@ const groupedMessages = Array.isArray(messages)
         setShowOneTimeModal(false);
         toast.success('🕒 One-Time View Plus enabled');
       }}
-      onClose={() => setShowOneTimeModal(false)}
+      onClose={() => {
+        setShowOneTimeModal(false);
+      }}
     />
   )}
   {showScheduleModal && (
     <ScheduleMessageModal
       isOpen={showScheduleModal}
-      onClose={() => setShowScheduleModal(false)}
-      onSchedule={(scheduledTime) => handleSendMessage(scheduledTime)}
+      onClose={() => {
+        setShowScheduleModal(false);
+      }}
+      onSchedule={(scheduledTime) => {
+        setShowScheduleModal(false);
+        handleSendMessage(scheduledTime);
+      }}
       initialContent={message}
     />
   )}
