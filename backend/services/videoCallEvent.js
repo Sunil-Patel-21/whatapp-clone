@@ -19,7 +19,7 @@ const handleVideoCallEvents = (socket,io,onlineUsers) => {
             console.log(`✅ Call notification sent to ${receiverId}`);
         }else{
             console.log(`❌ Receiver ${receiverId} not online`);
-            socket.emit("call_failed", {reason:"Receiver is not online"});
+            socket.emit("call_failed", {reason:"User is currently offline or unavailable"});
         }
     });
 
@@ -71,7 +71,8 @@ const handleVideoCallEvents = (socket,io,onlineUsers) => {
             });
             console.log(`server offer forward to ${receiverId} `);
         }else{
-            console.log(`server offer forward to ${receiverId} failed`);
+            console.log(`❌ Receiver ${receiverId} offline during offer`);
+            socket.emit("call_failed", {reason:"Peer disconnected"});
         }
     });
 
@@ -86,7 +87,8 @@ const handleVideoCallEvents = (socket,io,onlineUsers) => {
             });
             console.log(`server answer forward to ${receiverId} `);
         }else{
-            console.log(`server answer forward to ${receiverId} failed`);
+            console.log(`❌ Receiver ${receiverId} offline during answer`);
+            socket.emit("call_failed", {reason:"Peer disconnected"});
         }
     });
 

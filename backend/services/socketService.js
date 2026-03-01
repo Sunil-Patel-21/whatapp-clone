@@ -213,6 +213,14 @@ const initializeSocket = (server) => {
 
         // disconnect event
         socket.on("disconnect",handleDisconnected);
+        
+        // Notify all active call participants if this user was in a call
+        socket.on("disconnecting", () => {
+            if (userId) {
+                // Broadcast to all connected users that this user is disconnecting
+                socket.broadcast.emit("peer_disconnected_during_call", { userId });
+            }
+        });
     })
     io.socketUserMap = onlineUsers;
 

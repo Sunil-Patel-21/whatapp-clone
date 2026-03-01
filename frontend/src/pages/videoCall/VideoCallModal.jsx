@@ -17,7 +17,10 @@ function VideoCallModal({ socket }) {
   const remoteVideoRef = useRef(null);
   const peerConnectionRef = useRef(null);
   const isProcessingOfferRef = useRef(false);
+  const isProcessingAnswerRef = useRef(false);
   const callStartTimeRef = useRef(null);
+  const reconnectAttempts = useRef(0);
+  const MAX_RECONNECT_ATTEMPTS = 3;
 
   const {
     currentCall,
@@ -239,9 +242,54 @@ function VideoCallModal({ socket }) {
       }
     };
 
-    // handle ICE connection state
-    pc.oniceconnectionstatechange = () => {
+    // handle ICE connection state with reconnection
+    pc.oniceconnectionstatechange = async () => {
       console.log(`${role}: ICE state:`, pc.iceConnectionState);
+      
+      if (pc.iceConnectionState === 'disconnected') {
+        console.log(`⚠️ ${role}: ICE disconnected, attempting reconnection...`);
+        setCallStatus('reconnecting');
+        
+        if (reconnectAttempts.current < MAX_RECONNECT_ATTEMPTS) {
+          reconnectAttempts.current++;
+          console.log(`🔄 Reconnect attempt ${reconnectAttempts.current}/${MAX_RECONNECT_ATTEMPTS}`);
+          
+          // Wait 2 seconds before restart
+          setTimeout(async () => {
+            if (pc.iceConnectionState === 'disconnected' && pc.signalingState === 'stable') {
+              try {
+                const offer = await pc.createOffer({ iceRestart: true });
+                await pc.setLocalDescription(offer);
+                
+                const participantId = currentCall?.participantId || incomingCall?.callerId;
+                const callId = currentCall?.callId || incomingCall?.callId;
+                
+                if (socket && participantId && callId) {
+                  socket.emit('webrtc_offer', {
+                    offer,
+                    receiverId: participantId,
+                    callId
+                  });
+                  console.log('📤 ICE restart offer sent');
+                }
+              } catch (error) {
+                console.error('ICE restart failed:', error);
+              }
+            }
+          }, 2000);
+        } else {
+          console.log('❌ Max reconnection attempts reached');
+          setCallStatus('failed');
+          setTimeout(handleEndCall, 2000);
+        }
+      } else if (pc.iceConnectionState === 'connected' || pc.iceConnectionState === 'completed') {
+        reconnectAttempts.current = 0;
+        setCallStatus('connected');
+      } else if (pc.iceConnectionState === 'failed') {
+        console.log('❌ ICE connection failed permanently');
+        setCallStatus('failed');
+        setTimeout(handleEndCall, 2000);
+      }
     };
 
     setPeerConnection(pc);
@@ -344,6 +392,12 @@ function VideoCallModal({ socket }) {
       });
     }
 
+    // Reset all refs
+    callStartTimeRef.current = null;
+    reconnectAttempts.current = 0;
+    isProcessingOfferRef.current = false;
+    isProcessingAnswerRef.current = false;
+
     endCall();
   };
 
@@ -434,6 +488,13 @@ function VideoCallModal({ socket }) {
         return;
       }
 
+      if (isProcessingAnswerRef.current) {
+        console.log("⚠️ CALLER: Already processing answer, ignoring duplicate");
+        return;
+      }
+
+      isProcessingAnswerRef.current = true;
+
       try {
         await pc.setRemoteDescription(new RTCSessionDescription(answer));
         console.log("✅ CALLER: Remote description set");
@@ -442,6 +503,8 @@ function VideoCallModal({ socket }) {
         console.error("❌ CALLER: Answer handling error:", error);
         setCallStatus("failed");
         setTimeout(handleEndCall, 2000);
+      } finally {
+        isProcessingAnswerRef.current = false;
       }
     };
 
@@ -466,10 +529,21 @@ function VideoCallModal({ socket }) {
       }
     };
 
+    // Handle peer disconnect during call
+    const handlePeerDisconnected = ({ userId }) => {
+      const participantId = currentCall?.participantId || incomingCall?.callerId;
+      if (userId === participantId) {
+        console.log(`📞 Peer ${userId} disconnected during call`);
+        setCallStatus('ended');
+        setTimeout(handleEndCall, 1500);
+      }
+    };
+
     // Register all listeners
     socket.on("call_accepted", handleCallAccepted);
     socket.on("call_rejected", handleCallRejected);
     socket.on("call_ended", handleCallEnded);
+    socket.on("peer_disconnected_during_call", handlePeerDisconnected);
     socket.on("webrtc_offer", handleWebRTCOffer);
     socket.on("webrtc_answer", handleWebRTCAnswer);
     socket.on("webrtc_ice_candidate", handleWebRTCICECandidate);
@@ -480,6 +554,7 @@ function VideoCallModal({ socket }) {
       socket.off("call_accepted", handleCallAccepted);
       socket.off("call_rejected", handleCallRejected);
       socket.off("call_ended", handleCallEnded);
+      socket.off("peer_disconnected_during_call", handlePeerDisconnected);
       socket.off("webrtc_offer", handleWebRTCOffer);
       socket.off("webrtc_answer", handleWebRTCAnswer);
       socket.off("webrtc_ice_candidate", handleWebRTCICECandidate);
