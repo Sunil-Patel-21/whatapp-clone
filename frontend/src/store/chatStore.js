@@ -154,10 +154,14 @@
             });
 
             socket.on("scheduled_message_sent", ({ scheduledMessageId, message }) => {
-                set((state) => ({
-                    scheduledMessages: state.scheduledMessages.filter(msg => msg._id !== scheduledMessageId),
-                    messages: [...state.messages, message]
-                }));
+                set((state) => {
+                    // Check if message already exists
+                    const exists = state.messages.some(m => m._id === message._id);
+                    return {
+                        scheduledMessages: state.scheduledMessages.filter(msg => msg._id !== scheduledMessageId),
+                        messages: exists ? state.messages : [...state.messages, message]
+                    };
+                });
             });
 
             socket.on("scheduled_message_failed", ({ scheduledMessageId, reason }) => {
