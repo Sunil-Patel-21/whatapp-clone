@@ -1,9 +1,12 @@
-import React from "react";
-import { FaTimes, FaPhone, FaVideo, FaBan } from "react-icons/fa";
+import React, { useState } from "react";
+import { FaTimes, FaPhone, FaVideo, FaBan, FaFlag } from "react-icons/fa";
 import { format } from "date-fns";
 import useUserStore from "../../store/useUserStore";
+import ReportModal from "../../components/ReportModal";
 
 function ContactInfo({ contact, theme, onClose }) {
+  const [showReportModal, setShowReportModal] = useState(false);
+
   const handleAudioCall = () => {
     const initiateCall = useUserStore.getState().initiateCall;
     if (initiateCall) {
@@ -63,7 +66,22 @@ function ContactInfo({ contact, theme, onClose }) {
           <FaBan />
           <span>Block Contact</span>
         </button>
+        <button 
+          onClick={() => setShowReportModal(true)}
+          className={`flex items-center gap-3 w-full p-3 rounded text-red-500 ${theme === "dark" ? "hover:bg-[#2a3942]" : "hover:bg-gray-100"}`}
+        >
+          <FaFlag />
+          <span>Report Contact</span>
+        </button>
       </div>
+
+      <ReportModal
+        isOpen={showReportModal}
+        onClose={() => setShowReportModal(false)}
+        reportType="user"
+        reportedUserId={contact?._id}
+        reportedUserName={contact?.username}
+      />
     </div>
   );
 }

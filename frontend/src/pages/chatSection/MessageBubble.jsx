@@ -1,11 +1,12 @@
 import React from "react";
 import {format} from "date-fns";
-import { FaCheck, FaCheckDouble, FaPlus, FaRegCopy, FaSmile, FaShieldAlt, FaLock, FaClock } from "react-icons/fa";
+import { FaCheck, FaCheckDouble, FaPlus, FaRegCopy, FaSmile, FaShieldAlt, FaLock, FaClock, FaFlag } from "react-icons/fa";
 import { RxCross2} from "react-icons/rx";
 import {HiDotsVertical} from "react-icons/hi";
 import useOutsideclick from "../../hooks/useOutSideClick";
 import EmojiPicker from "emoji-picker-react";
 import OneTimeMediaViewer from "../../components/OneTimeMediaViewer";
+import ReportModal from "../../components/ReportModal";
 
 function MessageBubble({
     message,
@@ -18,6 +19,7 @@ function MessageBubble({
     const [showReactions, setShowReactions] = React.useState(false);
     const [showOptions, setShowOptions] = React.useState(false);
     const [showOneTimeViewer, setShowOneTimeViewer] = React.useState(false);
+    const [showReportModal, setShowReportModal] = React.useState(false);
     const [localViewsLeft, setLocalViewsLeft] = React.useState(message.viewsLeft);
     const optionsRef = React.useRef(null);
     const messageRef = React.useRef(null);
@@ -228,6 +230,19 @@ function MessageBubble({
                             <FaRegCopy className="text-red-600" size={14}/> <span>Delete</span>
                         </button>
                     )}
+
+                    {!isUserMessage && (
+                        <button 
+                            onClick={(e)=> {
+                                e.stopPropagation();
+                                setShowReportModal(true);
+                                setShowOptions(false);
+                            }}
+                            className="flex items-center w-full px-4 py-2 gap-3 rounded-lg text-red-600"
+                        >
+                            <FaFlag className="text-red-600" size={14}/> <span>Report</span>
+                        </button>
+                    )}
                 </div>
             )}
 
@@ -243,6 +258,15 @@ function MessageBubble({
                 }}
             />
         )}
+
+        <ReportModal
+            isOpen={showReportModal}
+            onClose={() => setShowReportModal(false)}
+            reportType="message"
+            reportedUserId={message.sender._id}
+            reportedMessageId={message._id}
+            reportedUserName={message.sender.username}
+        />
 
     </div>;
 }

@@ -9,6 +9,7 @@ const chatRoute = require('./routes/chat.route.js');
 const statusRoute = require('./routes/status.route.js');
 const scheduledMessageRoute = require('./routes/scheduledMessage.route.js');
 const adminRoute = require('./routes/admin.route.js');
+const reportRoute = require('./routes/report.route.js');
 const initializeSocket = require('./services/socketService');
 const { initializeCleanupService } = require('./services/messageCleanupService');
 const { initializeScheduledMessageService } = require('./services/scheduledMessageService');
@@ -58,6 +59,7 @@ app.use("/api/chats",chatRoute)
 app.use("/api/status",statusRoute)
 app.use("/api/scheduled-messages",scheduledMessageRoute)
 app.use("/api/admin",adminRoute)
+app.use("/api/reports",reportRoute)
 
 
 server.listen(port,()=>{
