@@ -8,6 +8,7 @@ const authRoute = require('./routes/auth.route.js');
 const chatRoute = require('./routes/chat.route.js');
 const statusRoute = require('./routes/status.route.js');
 const scheduledMessageRoute = require('./routes/scheduledMessage.route.js');
+const adminRoute = require('./routes/admin.route.js');
 const initializeSocket = require('./services/socketService');
 const { initializeCleanupService } = require('./services/messageCleanupService');
 const { initializeScheduledMessageService } = require('./services/scheduledMessageService');
@@ -56,6 +57,7 @@ app.use('/api/auth',authRoute);
 app.use("/api/chats",chatRoute)
 app.use("/api/status",statusRoute)
 app.use("/api/scheduled-messages",scheduledMessageRoute)
+app.use("/api/admin",adminRoute)
 
 
 server.listen(port,()=>{
