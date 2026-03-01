@@ -82,7 +82,11 @@ function UserManagement() {
               <tr key={user._id}>
                 <td className="px-6 py-4">
                   <div className="flex items-center gap-3">
-                    <div className="w-10 h-10 bg-gray-300 rounded-full"></div>
+                    <img 
+                      src={user.profilePicture || 'https://api.dicebear.com/6.x/avataaars/svg?seed=' + user._id} 
+                      alt={user.username}
+                      className="w-10 h-10 bg-gray-300 rounded-full object-cover"
+                    />
                     <span className="font-medium text-black">{user.username || 'N/A'}</span>
                   </div>
                 </td>

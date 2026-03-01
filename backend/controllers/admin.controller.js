@@ -90,7 +90,7 @@ exports.getAllUsers = async (req, res) => {
         } : {};
 
         const users = await User.find(query)
-            .select('username email phoneNumber isOnline lastSeen createdAt isVerified')
+            .select('username email phoneNumber isOnline lastSeen createdAt isVerified profilePicture')
             .limit(limit * 1)
             .skip((page - 1) * limit)
             .sort({ createdAt: -1 });
