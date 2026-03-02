@@ -50,32 +50,32 @@ const ReportModal = ({ isOpen, onClose, reportType, reportedUserId, reportedMess
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-      <div className="bg-white rounded-lg w-full max-w-md p-6">
-        <div className="flex justify-between items-center mb-4">
-          <h2 className="text-xl font-semibold text-black">
+    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+      <div className="bg-white rounded-2xl w-full max-w-lg shadow-xl">
+        <div className="flex justify-between items-center px-6 py-5 border-b">
+          <h2 className="text-2xl font-semibold text-gray-900">
             Report {reportType === 'message' ? 'Message' : 'User'}
           </h2>
-          <button onClick={onClose} className="text-gray-500 hover:text-gray-700">
+          <button onClick={onClose} className="text-gray-400 hover:text-gray-600 transition-colors">
             <X size={24} />
           </button>
         </div>
 
-        {reportedUserName && (
-          <p className="text-sm text-gray-600 mb-4">
-            Reporting: <span className="font-medium text-black">{reportedUserName}</span>
-          </p>
-        )}
+        <form onSubmit={handleSubmit} className="px-6 py-5">
+          {reportedUserName && (
+            <p className="text-sm text-gray-600 mb-6">
+              Reporting: <span className="font-semibold text-gray-900">{reportedUserName}</span>
+            </p>
+          )}
 
-        <form onSubmit={handleSubmit}>
-          <div className="mb-4">
-            <label className="block text-sm font-medium text-black mb-2">
+          <div className="mb-5">
+            <label className="block text-sm font-medium text-gray-900 mb-2">
               Reason for reporting *
             </label>
             <select
               value={reason}
               onChange={(e) => setReason(e.target.value)}
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-black"
+              className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-red-500 focus:border-transparent text-gray-900 bg-white"
               required
             >
               <option value="">Select a reason</option>
@@ -85,15 +85,15 @@ const ReportModal = ({ isOpen, onClose, reportType, reportedUserId, reportedMess
             </select>
           </div>
 
-          <div className="mb-4">
-            <label className="block text-sm font-medium text-black mb-2">
+          <div className="mb-6">
+            <label className="block text-sm font-medium text-gray-900 mb-2">
               Additional details (optional)
             </label>
             <textarea
               value={description}
               onChange={(e) => setDescription(e.target.value)}
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-black"
-              rows="3"
+              className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-red-500 focus:border-transparent text-gray-900 resize-none"
+              rows="4"
               placeholder="Provide more context..."
             />
           </div>
@@ -102,14 +102,14 @@ const ReportModal = ({ isOpen, onClose, reportType, reportedUserId, reportedMess
             <button
               type="button"
               onClick={onClose}
-              className="flex-1 px-4 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50"
+              className="flex-1 px-6 py-3 border border-gray-300 rounded-lg text-gray-700 font-medium hover:bg-gray-50 transition-colors"
               disabled={loading}
             >
               Cancel
             </button>
             <button
               type="submit"
-              className="flex-1 px-4 py-2 bg-red-500 text-white rounded-lg hover:bg-red-600 disabled:opacity-50"
+              className="flex-1 px-6 py-3 bg-red-500 text-white font-medium rounded-lg hover:bg-red-600 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
               disabled={loading}
             >
               {loading ? 'Submitting...' : 'Submit Report'}

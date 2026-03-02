@@ -3,6 +3,7 @@ import { BrowserRouter as Router, Route, Routes } from "react-router-dom";
 import Login from "./pages/user-login/Login";
 import { ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
+import { Toaster } from "react-hot-toast";
 import HomePage from "./components/HomePage";
 import { ProtectedRoute, PublicRoute } from "./Protected";
 import UserDetails from "./components/UserDetails";
@@ -43,6 +44,7 @@ function App() {
   return (
     <>
       <ToastContainer position="top-right" autoClose={3000} />
+      <Toaster position="top-right" />
       {user && <VideoCallManager socket={getSocket()} />}
 
       <Router>

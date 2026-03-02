@@ -36,7 +36,7 @@ const ReportsManagement = () => {
 
   const handleResolve = async (reportId, action) => {
     try {
-      await resolveReport(reportId, action);
+      await resolveReport(reportId, action, action);
       toast.success(`Report ${action}`);
       fetchReports();
     } catch (error) {
