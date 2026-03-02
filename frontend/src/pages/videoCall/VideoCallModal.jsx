@@ -161,6 +161,13 @@ function VideoCallModal({ socket }) {
     } catch (error) {
       console.error("Media error", error);
       setCallStatus("failed");
+      
+      // Cleanup on media error
+      if (peerConnectionRef.current) {
+        peerConnectionRef.current.close();
+        peerConnectionRef.current = null;
+      }
+      
       setTimeout(handleEndCall, 2000);
       throw error;
     }
@@ -206,8 +213,10 @@ function VideoCallModal({ socket }) {
     pc.ontrack = (event) => {
       console.log(`${role}: Received remote track`, event.track.kind);
       if (event.streams && event.streams[0]) {
+        console.log(`${role}: Setting remote stream with ${event.streams[0].getTracks().length} tracks`);
         setRemoteStream(event.streams[0]);
       } else {
+        console.log(`${role}: Creating new MediaStream for track`);
         const stream = new MediaStream([event.track]);
         setRemoteStream(stream);
       }
@@ -308,7 +317,13 @@ function VideoCallModal({ socket }) {
       setCallStatus("connecting");
 
       const stream = await initialiZeMedia(callType === "video");
+      console.log(`📹 CALLER: Got local stream with ${stream.getTracks().length} tracks`);
+      
       const pc = createPeerConnection(stream, "CALLER");
+
+      // Verify tracks are added
+      const senders = pc.getSenders();
+      console.log(`📤 CALLER: Added ${senders.length} tracks to peer connection`);
 
       const offer = await pc.createOffer({
         offerToReceiveAudio: true,
@@ -337,9 +352,14 @@ function VideoCallModal({ socket }) {
 
       // get media first
       const stream = await initialiZeMedia(callType === "video");
+      console.log(`📹 RECEIVER: Got local stream with ${stream.getTracks().length} tracks`);
 
       // create peer connection
       const pc = createPeerConnection(stream, "RECEIVER");
+      
+      // Verify tracks are added
+      const senders = pc.getSenders();
+      console.log(`📤 RECEIVER: Added ${senders.length} tracks to peer connection`);
       
       // Wait a bit for peer connection to stabilize
       await new Promise(resolve => setTimeout(resolve, 500));
@@ -376,6 +396,13 @@ function VideoCallModal({ socket }) {
         callId: incomingCall?.callId,
       });
     }
+    
+    // Cleanup peer connection if exists
+    if (peerConnectionRef.current) {
+      peerConnectionRef.current.close();
+      peerConnectionRef.current = null;
+    }
+    
     endCall();
   };
 
@@ -390,6 +417,22 @@ function VideoCallModal({ socket }) {
         callId: callId,
         participantId: participantId,
       });
+    }
+
+    // Cleanup peer connection properly
+    if (peerConnectionRef.current) {
+      peerConnectionRef.current.close();
+      peerConnectionRef.current = null;
+    }
+
+    // Cleanup local video ref
+    if (localVideoRef.current) {
+      localVideoRef.current.srcObject = null;
+    }
+
+    // Cleanup remote video ref
+    if (remoteVideoRef.current) {
+      remoteVideoRef.current.srcObject = null;
     }
 
     // Reset all refs
@@ -760,12 +803,13 @@ function VideoCallModal({ socket }) {
         {/* active call ui  */}
         {shouldShowActiveCall && (
           <div className="relative w-full h-full">
-            {callType === "video" && (
+            {/* Remote video - show for both audio and video calls when stream exists */}
+            {remoteStream && callType === "video" && (
               <video
                 ref={remoteVideoRef}
                 autoPlay
                 playsInline
-                className={`w-full h-full object-cover bg-gray-800 ${remoteStream ? "block" : "hidden"}`}
+                className="w-full h-full object-cover bg-gray-800"
               />
             )}
 
