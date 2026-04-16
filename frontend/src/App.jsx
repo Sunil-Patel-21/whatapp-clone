@@ -14,12 +14,6 @@ import useUserStore from "./store/useUserStore";
 import { disconnectSocket, initializeSocket, getSocket } from "./services/chat.service";
 import { useChatStore } from "./store/chatStore";
 import VideoCallManager from "./pages/videoCall/VideoCallManager";
-import AdminLogin from "./pages/admin/AdminLogin";
-import AdminLayout from "./pages/admin/AdminLayout";
-import AdminDashboard from "./pages/admin/AdminDashboard";
-import UserManagement from "./pages/admin/UserManagement";
-import ReportsManagement from "./pages/admin/ReportsManagement";
-import Analytics from "./pages/admin/Analytics";
 
 function App() {
   const {user} = useUserStore();
@@ -62,15 +56,6 @@ function App() {
             <Route path="/status" element={<Status />} />
             <Route path="/setting" element={<Setting />} />
             <Route path="/help" element={<Help />} />
-          </Route>
-
-          {/* Admin Routes */}
-          <Route path="/admin/login" element={<AdminLogin />} />
-          <Route path="/admin" element={<AdminLayout />}>
-            <Route path="dashboard" element={<AdminDashboard />} />
-            <Route path="users" element={<UserManagement />} />
-            <Route path="reports" element={<ReportsManagement />} />
-            <Route path="analytics" element={<Analytics />} />
           </Route>
 
         </Routes>
