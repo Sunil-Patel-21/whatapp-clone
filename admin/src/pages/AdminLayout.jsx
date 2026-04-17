@@ -65,10 +65,10 @@ function AdminLayout() {
         </nav>
 
         {/* Logout Button */}
-        <div className="absolute bottom-0 left-0 right-0 p-4 border-t border-gray-700">
+        <div className="absolute bottom-0 left-0 w-72 p-4 border-t border-gray-700">
           <button
             onClick={handleLogout}
-            className="flex items-center gap-4 px-4 py-3 rounded-xl w-full text-left hover:bg-red-600/20 hover:translate-x-1 transition-all duration-300 group border border-transparent hover:border-red-500/50"
+            className="flex items-center gap-4 px-4 py-3 rounded-xl w-full text-left hover:bg-red-600/20 transition-all duration-300 group border border-transparent hover:border-red-500/50"
           >
             <FaSignOutAlt className="w-5 h-5 group-hover:scale-110 transition-transform" />
             <span className="font-medium">Logout</span>
