@@ -19,7 +19,7 @@ const app = express();
 const port = process.env.PORT || 3000;
 
 const corsOption = {
-    origin: process.env.FRONTEND_URL,
+    origin: ['http://localhost:5173', 'http://localhost:5174'],
     credentials: true
 }
 
@@ -28,10 +28,6 @@ app.use(cors(corsOption));
 app.use(express.json()); // parse json
 app.use(cookieParser());
 app.use(bodyParser.urlencoded({ extended: true })); // parse urlencoded
-app.use(cors({
-    origin: 'http://localhost:5173',
-    credentials: true
-}));
 
 // db connection
 connectDB();

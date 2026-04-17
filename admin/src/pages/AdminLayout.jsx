@@ -9,14 +9,14 @@ function AdminLayout() {
 
   const handleLogout = () => {
     clearAdmin();
-    navigate('/admin/login');
+    navigate('/login');
   };
 
   const menuItems = [
-    { path: '/admin/dashboard', icon: FaHome, label: 'Dashboard' },
-    { path: '/admin/users', icon: FaUsers, label: 'Users' },
-    { path: '/admin/reports', icon: FaFlag, label: 'Reports' },
-    { path: '/admin/analytics', icon: FaChartBar, label: 'Analytics' }
+    { path: '/dashboard', icon: FaHome, label: 'Dashboard' },
+    { path: '/users', icon: FaUsers, label: 'Users' },
+    { path: '/reports', icon: FaFlag, label: 'Reports' },
+    { path: '/analytics', icon: FaChartBar, label: 'Analytics' }
   ];
 
   return (

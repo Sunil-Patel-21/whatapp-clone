@@ -11,16 +11,14 @@ import Analytics from "./pages/Analytics";
 import useAdminStore from "./store/useAdminStore";
 
 function App() {
-  const { isAuthenticated } = useAdminStore();
-
   return (
     <>
       <ToastContainer position="top-right" autoClose={3000} />
       <Router>
         <Routes>
-          <Route path="/login" element={!isAuthenticated ? <AdminLogin /> : <Navigate to="/dashboard" />} />
+          <Route path="/login" element={<AdminLogin />} />
           
-          <Route path="/" element={isAuthenticated ? <AdminLayout /> : <Navigate to="/login" />}>
+          <Route path="/" element={<AdminLayout />}>
             <Route index element={<Navigate to="/dashboard" />} />
             <Route path="dashboard" element={<AdminDashboard />} />
             <Route path="users" element={<UserManagement />} />

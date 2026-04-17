@@ -19,7 +19,7 @@ function AdminLogin() {
       const result = await adminLogin(email, password);
       setAdmin(result.data.admin);
       toast.success('Login successful');
-      navigate('/admin/dashboard');
+      navigate('/dashboard');
     } catch (error) {
       toast.error(error.message || 'Login failed');
     } finally {
