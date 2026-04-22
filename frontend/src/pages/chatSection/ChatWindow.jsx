@@ -32,11 +32,11 @@ function ChatWindow({selectedContact, setSelectedContact}) {
   const [searchQuery, setSearchQuery] = useState("");
   const [filePreview, setFilePreview] = useState(null);
   const [selectedFile, setSelectedFile] = useState(null);
-  // const [showTemporaryModal, setShowTemporaryModal] = useState(false);
-  // const [showOneTimeModal, setShowOneTimeModal] = useState(false);
-  // const [oneTimeConfig, setOneTimeConfig] = useState(null);
-  // const [showScheduleModal, setShowScheduleModal] = useState(false);
-  // const [showScheduledList, setShowScheduledList] = useState(false);
+  const [showTemporaryModal, setShowTemporaryModal] = useState(false);
+  const [showOneTimeModal, setShowOneTimeModal] = useState(false);
+  const [oneTimeConfig, setOneTimeConfig] = useState(null);
+  const [showScheduleModal, setShowScheduleModal] = useState(false);
+  const [showScheduledList, setShowScheduledList] = useState(false);
 
   const typingTimeOutRef = useRef(null);
   const messagesEndRef = useRef(null);
@@ -79,7 +79,7 @@ function ChatWindow({selectedContact, setSelectedContact}) {
   const lastSeen = getUserLastSeen(selectedContact?._id);
   const isTyping = isUserTyping(selectedContact?._id);
   const currentConv = getCurrentConversation();
-  // const isTemporaryMode = currentConv?.isTemporaryMode || false;
+  const isTemporaryMode = currentConv?.isTemporaryMode || false;
 
   console.log("LastSeen : ", lastSeen);
   
@@ -162,39 +162,39 @@ const handleSendMessage = async (scheduledTime = null) => {
   if (selectedFile) {
     formData.append("media", selectedFile);
     
-    // // Add one-time media config if enabled
-    // if (oneTimeConfig) {
-    //   formData.append("isOneTimeMedia", "true");
-    //   formData.append("viewLimit", oneTimeConfig.viewLimit);
-    //   formData.append("mediaExpiryDuration", oneTimeConfig.mediaExpiryDuration);
-    // }
+    // Add one-time media config if enabled
+    if (oneTimeConfig) {
+      formData.append("isOneTimeMedia", "true");
+      formData.append("viewLimit", oneTimeConfig.viewLimit);
+      formData.append("mediaExpiryDuration", oneTimeConfig.mediaExpiryDuration);
+    }
   }
 
   try {
-    // if (scheduledTime) {
-    //   formData.append("scheduledTime", scheduledTime);
-    //   await createScheduledMessage(formData);
-    //   toast.success('⏰ Message scheduled successfully');
-    // } else {
+    if (scheduledTime) {
+      formData.append("scheduledTime", scheduledTime);
+      await createScheduledMessage(formData);
+      toast.success('⏰ Message scheduled successfully');
+    } else {
       await sendMessage(formData);
-    // }
+    }
     
     // Clear all states
     setMessage("");
     setSelectedFile(null);
     setFilePreview(null);
-    // setOneTimeConfig(null);
+    setOneTimeConfig(null);
     if (fileInputRef.current) {
       fileInputRef.current.value = "";
     }
   } catch (error) {
     console.error("Error sending message:", error);
-    toast.error("Failed to send message");
+    toast.error(scheduledTime ? "Failed to schedule message" : "Failed to send message");
     // Clear on error too
     setMessage("");
     setSelectedFile(null);
     setFilePreview(null);
-    // setOneTimeConfig(null);
+    setOneTimeConfig(null);
     if (fileInputRef.current) {
       fileInputRef.current.value = "";
     }
@@ -272,22 +272,22 @@ const groupedMessages = Array.isArray(messages)
     }
   };
 
-  // const handleToggleTemporaryMode = async (duration) => {
-  //   try {
-  //     const conversation = conversations.find(conv =>
-  //       conv.participants.some(p => p._id === selectedContact._id)
-  //     );
-  //     if (conversation?._id) {
-  //       const newMode = !isTemporaryMode;
-  //       await toggleTemporaryMode(conversation._id, newMode, newMode ? duration : null);
-  //       updateConversationTemporaryMode(conversation._id, newMode, newMode ? duration : null);
-  //       toast.success(newMode ? '🛡️ Temporary mode enabled' : 'Temporary mode disabled');
-  //     }
-  //   } catch (error) {
-  //     toast.error('Failed to toggle temporary mode');
-  //   }
-  //   setShowTemporaryModal(false);
-  // };
+  const handleToggleTemporaryMode = async (duration) => {
+    try {
+      const conversation = conversations.find(conv =>
+        conv.participants.some(p => p._id === selectedContact._id)
+      );
+      if (conversation?._id) {
+        const newMode = !isTemporaryMode;
+        await toggleTemporaryMode(conversation._id, newMode, newMode ? duration : null);
+        updateConversationTemporaryMode(conversation._id, newMode, newMode ? duration : null);
+        toast.success(newMode ? '🛡️ Temporary mode enabled' : 'Temporary mode disabled');
+      }
+    } catch (error) {
+      toast.error('Failed to toggle temporary mode');
+    }
+    setShowTemporaryModal(false);
+  };
 
   const filteredMessages = searchQuery
     ? Object.entries(groupedMessages).reduce((acc, [date, msgs]) => {
@@ -386,7 +386,7 @@ const groupedMessages = Array.isArray(messages)
 
       {showChatMenu && (
         <div ref={chatMenuRef} className={`absolute top-10 right-0 w-56 rounded-lg shadow-lg py-2 z-50 ${theme === "dark" ? "bg-[#2a3942] text-white" : "bg-white text-gray-800"}`}>
-          {/* <button
+          <button
             onClick={() => {
               setShowScheduledList(true);
               setShowChatMenu(false);
@@ -411,7 +411,7 @@ const groupedMessages = Array.isArray(messages)
             <FaShieldAlt className="h-4 w-4" />
             <span>{isTemporaryMode ? '✓ Temporary Mode ON' : 'Temporary Mode'}</span>
           </button>
-          <div className={`border-t ${theme === "dark" ? "border-gray-700" : "border-gray-200"} my-1`}></div> */}
+          <div className={`border-t ${theme === "dark" ? "border-gray-700" : "border-gray-200"} my-1`}></div>
           <button
             onClick={() => {
               setShowContactInfo(true);
@@ -522,7 +522,7 @@ const groupedMessages = Array.isArray(messages)
           onClick={()=>{
             setFilePreview(null);
             setSelectedFile(null);
-            // setOneTimeConfig(null);
+            setOneTimeConfig(null);
             if (fileInputRef.current) {
               fileInputRef.current.value = '';
             }
@@ -532,14 +532,14 @@ const groupedMessages = Array.isArray(messages)
           <FaTimes className={"h-4 w-4"} />
         </button>
         
-        {/* <div className="flex justify-center gap-2 mt-2">
+        <div className="flex justify-center gap-2 mt-2">
           <button
             onClick={() => setShowOneTimeModal(true)}
             className={`px-4 py-2 rounded-lg ${oneTimeConfig ? 'bg-blue-500 text-white' : 'bg-gray-200 text-gray-700'}`}
           >
             {oneTimeConfig ? '✓ One-Time View' : 'Enable One-Time View'}
           </button>
-        </div> */}
+        </div>
       </div>
     )}
 
@@ -551,7 +551,7 @@ const groupedMessages = Array.isArray(messages)
         <FaSmile className={`h-6 w-6 ${theme === "dark"?"text-gray-400" : "text-gray-500"}`}/>
       </button>
 
-      {/* <button 
+      <button 
         onClick={() => {
           if (!message.trim() && !selectedFile) {
             toast.error('Please type a message or select a file first');
@@ -563,7 +563,7 @@ const groupedMessages = Array.isArray(messages)
         title="Schedule message"
       >
         <FaClock className={`h-6 w-6 ${theme === "dark"?"text-gray-400" : "text-gray-500"}`}/>
-      </button> */}
+      </button>
 
       {showEmojiPicker && (
         <div ref={emojiPickerRef} className="absolute  left-0 bottom-16 z-50">
@@ -631,7 +631,7 @@ const groupedMessages = Array.isArray(messages)
 
   </div>
   )}
-  {/* {showTemporaryModal && (
+  {showTemporaryModal && (
     <TemporaryModeModal
       theme={theme}
       onConfirm={handleToggleTemporaryMode}
@@ -670,7 +670,7 @@ const groupedMessages = Array.isArray(messages)
       conversationId={currentConversation}
       onClose={() => setShowScheduledList(false)}
     />
-  )} */}
+  )}
   <VideoCallManager socket={socket}/> 
 
   </>
