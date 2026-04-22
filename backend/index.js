@@ -19,7 +19,11 @@ const app = express();
 const port = process.env.PORT || 3000;
 
 const corsOption = {
-    origin: ['http://localhost:5173', 'http://localhost:5174'],
+    origin: [
+        'http://localhost:5173',
+        'http://localhost:5174',
+        'https://whatapp-clone-frontend-p4ji.onrender.com'
+    ],
     credentials: true
 }
 
