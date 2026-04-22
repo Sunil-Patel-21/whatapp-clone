@@ -24,7 +24,9 @@ const corsOption = {
         'http://localhost:5174',
         'https://whatapp-clone-frontend-p4ji.onrender.com'
     ],
-    credentials: true
+    credentials: true,
+    methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+    allowedHeaders: ['Content-Type', 'Authorization']
 }
 
 // middleware
